@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Case Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #8b949e;
+            font-size: 1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .panel {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 24px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #f0f6fc;
+            font-size: 0.875rem;
+        }
+
+        .form-group input, 
+        .form-group select, 
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus, 
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            margin: 4px;
+        }
+
+        .btn:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+
+        .btn-primary {
+            background: #238636;
+            border-color: #238636;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #2ea043;
+            border-color: #2ea043;
+        }
+
+        .btn-danger {
+            background: #da3633;
+            border-color: #da3633;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #f85149;
+            border-color: #f85149;
+        }
+
+        .btn-secondary {
+            background: #1f6feb;
+            border-color: #1f6feb;
+            color: #ffffff;
+        }
+
+        .btn-secondary:hover {
+            background: #58a6ff;
+            border-color: #58a6ff;
+        }
+
+        .templates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .template-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .template-card:hover {
+            border-color: #58a6ff;
+            background: #161b22;
+        }
+
+        .template-card h4 {
+            color: #f0f6fc;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .template-card p {
+            color: #8b949e;
+            font-size: 0.75rem;
+        }
+
+        .test-case-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .test-case-item h4 {
+            color: #f0f6fc;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .test-case-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+        }
+
+        .test-case-meta span {
+            color: #8b949e;
+        }
+
+        .priority-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.6875rem;
+            font-weight: 500;
+        }
+
+        .priority-high { background: #da3633; color: #ffffff; }
+        .priority-medium { background: #fb8500; color: #ffffff; }
+        .priority-low { background: #238636; color: #ffffff; }
+
+        .command-block {
+            background: #010409;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #79c0ff;
+            margin-top: 8px;
+            overflow-x: auto;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #da3633;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-btn:hover {
+            background: #f85149;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 1.5rem;
+            color: #58a6ff;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .stat-card p {
+            color: #8b949e;
+            font-size: 0.75rem;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #8b949e;
+            padding: 40px 20px;
+            border: 1px dashed #30363d;
+            border-radius: 6px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #238636;
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .templates {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Test Case Generator</h1>
+            <p>Create, manage, and export test cases to Excel format</p>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <h2 class="section-title">Configuration</h2>
+                
+                <div class="templates">
+                    <div class="template-card" onclick="loadTemplate('api-tests')">
+                        <h4>API Tests</h4>
+                        <p>REST API endpoint validation</p>
+                    </div>
+                    <div class="template-card" onclick="loadTemplate('ui-tests')">
+                        <h4>UI Tests</h4>
+                        <p>User interface testing scenarios</p>
+                    </div>
+                    <div class="template-card" onclick="loadTemplate('integration-tests')">
+                        <h4>Integration Tests</h4>
+                        <p>System integration validation</p>
+                    </div>
+                    <div class="template-card" onclick="loadTemplate('security-tests')">
+                        <h4>Security Tests</h4>
+                        <p>Security and authentication tests</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="testName">Test Case Name</label>
+                    <input type="text" id="testName" placeholder="Enter test case name">
+                </div>
+
+                <div class="form-group">
+                    <label for="testCategory">Category</label>
+                    <select id="testCategory">
+                        <option value="API Tests">API Tests</option>
+                        <option value="UI Tests">UI Tests</option>
+                        <option value="Integration Tests">Integration Tests</option>
+                        <option value="Security Tests">Security Tests</option>
+                        <option value="Performance Tests">Performance Tests</option>
+                        <option value="Database Tests">Database Tests</option>
+                        <option value="Functional Tests">Functional Tests</option>
+                        <option value="Regression Tests">Regression Tests</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="testSteps">Test Steps</label>
+                    <textarea id="testSteps" placeholder="1. Step one&#10;2. Step two&#10;3. Step three"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="expectedResult">Expected Result</label>
+                    <input type="text" id="expectedResult" placeholder="What should happen when test passes">
+                </div>
+
+                <div class="form-group">
+                    <label for="testPriority">Priority</label>
+                    <select id="testPriority">
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="prerequisites">Prerequisites</label>
+                    <input type="text" id="prerequisites" placeholder="Any setup required before test">
+                </div>
+
+                <div class="form-group">
+                    <label for="testObjective">Test Objective</label>
+                    <input type="text" id="testObjective" placeholder="What is the objective of this test?">
+                </div>
+                <div class="form-group">
+                    <label for="author">Author</label>
+                    <input type="text" id="author" placeholder="Test case author">
+                </div>
+                <div class="form-group">
+                    <label for="regression">Regression</label>
+                    <select id="regression">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="type">Type</label>
+                    <input type="text" id="type" placeholder="e.g., Functional, Security, Performance">
+                </div>
+                <div class="form-group">
+                    <label for="complexity">Complexity</label>
+                    <select id="complexity">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="automated">Automated</label>
+                    <select id="automated">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fixVersion">Fix Version/s</label>
+                    <input type="text" id="fixVersion" placeholder="e.g., 1.0.0, 1.0.1">
+                </div>
+                <div class="form-group">
+                    <label for="sprint">Sprint</label>
+                    <input type="text" id="sprint" placeholder="e.g., Sprint 1, Sprint 2">
+                </div>
+
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="addTestCase()">Add Test Case</button>
+                    <button class="btn btn-secondary" onclick="generateRandomTests()">Generate Sample Tests</button>
+                    <button class="btn btn-danger" onclick="clearAllTests()">Clear All</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 class="section-title">Test Cases Preview</h2>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="totalTests">0</h3>
+                        <p>Total Tests</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="highPriorityTests">0</h3>
+                        <p>High Priority</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="categoriesCount">0</h3>
+                        <p>Categories</p>
+                    </div>
+                </div>
+
+                <div id="testCasesList"></div>
+
+                <div class="button-group" style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="exportToExcel()">Export to Excel</button>
+                    <button class="btn" onclick="exportToCSV()">Export to CSV</button>
+                    <button class="btn btn-secondary" onclick="exportUserStoryToExcel()">Export User Story to Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testCases = [];
+        let testIdCounter = 1;
+
+        const templates = {
+            'api-tests': [
+                {
+                    name: 'GET Request Test',
+                    category: 'API Tests',
+                    steps: '1. Send GET request to /api/users\n2. Verify response status code\n3. Validate response structure',
+                    expected: 'Returns 200 status with user list in JSON format',
+                    priority: 'High',
+                    prerequisites: 'API server running, valid endpoint',
+                    objective: 'Verify user list API endpoint functionality',
+                    author: 'QA Team',
+                    regression: 'Yes',
+                    type: 'Functional',
+                    complexity: 'Medium',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'POST Request Validation',
+                    category: 'API Tests',
+                    steps: '1. Send POST request with valid payload\n2. Check response status\n3. Verify created resource',
+                    expected: 'Returns 201 status with created resource details',
+                    priority: 'High',
+                    prerequisites: 'Valid authentication token',
+                    objective: 'Validate resource creation via POST API',
+                    author: 'Dev Team',
+                    regression: 'Yes',
+                    type: 'Functional',
+                    complexity: 'Medium',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'Error Handling Test',
+                    category: 'API Tests',
+                    steps: '1. Send request with invalid data\n2. Verify error response\n3. Check error message format',
+                    expected: 'Returns appropriate error code with descriptive message',
+                    priority: 'Medium',
+                    prerequisites: 'API documentation available',
+                    objective: 'Ensure robust error handling for API requests',
+                    author: 'QA Team',
+                    regression: 'No',
+                    type: 'Negative',
+                    complexity: 'Low',
+                    automated: 'No',
+                    fixVersion: '1.0.1',
+                    sprint: 'Sprint 2'
+                }
+            ],
+            'ui-tests': [
+                {
+                    name: 'Login Form Validation',
+                    category: 'UI Tests',
+                    steps: '1. Navigate to login page\n2. Enter valid credentials\n3. Click login button\n4. Verify successful login',
+                    expected: 'User is redirected to dashboard page',
+                    priority: 'High',
+                    prerequisites: 'Valid user account exists',
+                    objective: 'Verify user authentication flow via UI',
+                    author: 'QA Team',
+                    regression: 'Yes',
+                    type: 'Functional',
+                    complexity: 'Medium',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'Form Field Validation',
+                    category: 'UI Tests',
+                    steps: '1. Access form page\n2. Leave required fields empty\n3. Submit form\n4. Check validation messages',
+                    expected: 'Validation errors displayed for required fields',
+                    priority: 'Medium',
+                    prerequisites: 'Form with validation rules',
+                    objective: 'Test UI form validation for various inputs',
+                    author: 'QA Team',
+                    regression: 'No',
+                    type: 'Functional',
+                    complexity: 'Medium',
+                    automated: 'No',
+                    fixVersion: '1.0.1',
+                    sprint: 'Sprint 2'
+                },
+                {
+                    name: 'Navigation Menu Test',
+                    category: 'UI Tests',
+                    steps: '1. Load main page\n2. Click each menu item\n3. Verify page loads correctly',
+                    expected: 'All menu items navigate to correct pages',
+                    priority: 'Low',
+                    prerequisites: 'All pages implemented',
+                    objective: 'Verify navigation functionality across the application',
+                    author: 'QA Team',
+                    regression: 'Yes',
+                    type: 'Functional',
+                    complexity: 'Low',
+                    automated: 'No',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                }
+            ],
+            'integration-tests': [
+                {
+                    name: 'Database Connection Test',
+                    category: 'Integration Tests',
+                    steps: '1. Initialize database connection\n2. Execute test query\n3. Verify results\n4. Close connection',
+                    expected: 'Connection established and query executes successfully',
+                    priority: 'High',
+                    prerequisites: 'Database server running',
+                    objective: 'Ensure application can connect and interact with database',
+                    author: 'DevOps',
+                    regression: 'Yes',
+                    type: 'Integration',
+                    complexity: 'High',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'External API Integration',
+                    category: 'Integration Tests',
+                    steps: '1. Configure API client\n2. Make authenticated request\n3. Process response\n4. Handle errors',
+                    expected: 'External API responds correctly and data is processed',
+                    priority: 'High',
+                    prerequisites: 'External API access credentials',
+                    objective: 'Verify seamless integration with third-party APIs',
+                    author: 'Integration Team',
+                    regression: 'Yes',
+                    type: 'Integration',
+                    complexity: 'High',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'File System Integration',
+                    category: 'Integration Tests',
+                    steps: '1. Create test file\n2. Write data to file\n3. Read data back\n4. Clean up test file',
+                    expected: 'File operations complete without errors',
+                    priority: 'Medium',
+                    prerequisites: 'Write permissions to test directory',
+                    objective: 'Validate file system interactions and permissions',
+                    author: 'DevOps',
+                    regression: 'No',
+                    type: 'Integration',
+                    complexity: 'Medium',
+                    automated: 'Yes',
+                    fixVersion: '1.0.1',
+                    sprint: 'Sprint 2'
+                }
+            ],
+            'security-tests': [
+                {
+                    name: 'Authentication Test',
+                    category: 'Security Tests',
+                    steps: '1. Attempt access without token\n2. Verify access denied\n3. Test with valid token\n4. Confirm access granted',
+                    expected: 'Proper authentication enforcement',
+                    priority: 'High',
+                    prerequisites: 'Authentication system configured',
+                    objective: 'Ensure secure access control and authentication',
+                    author: 'Security Team',
+                    regression: 'Yes',
+                    type: 'Security',
+                    complexity: 'High',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'SQL Injection Test',
+                    category: 'Security Tests',
+                    steps: '1. Submit malicious SQL in input fields\n2. Monitor database logs\n3. Check response handling',
+                    expected: 'Input is sanitized, no SQL injection possible',
+                    priority: 'High',
+                    prerequisites: 'Database with monitoring enabled',
+                    objective: 'Protect against SQL injection vulnerabilities',
+                    author: 'Security Team',
+                    regression: 'Yes',
+                    type: 'Security',
+                    complexity: 'High',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'XSS Protection Test',
+                    category: 'Security Tests',
+                    steps: '1. Submit script tags in form inputs\n2. Verify output encoding\n3. Check script execution prevention',
+                    expected: 'Scripts are encoded and not executed',
+                    priority: 'High',
+                    prerequisites: 'Web application with forms',
+                    objective: 'Prevent Cross-Site Scripting (XSS) attacks',
+                    author: 'Security Team',
+                    regression: 'Yes',
+                    type: 'Security',
+                    complexity: 'Medium',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                }
+            ]
+        };
+
+        function loadTemplate(templateType) {
+            const templateTests = templates[templateType];
+            if (templateTests) {
+                templateTests.forEach(test => {
+                    testCases.push({
+                        id: testIdCounter++,
+                        name: test.name,
+                        category: test.category,
+                        steps: test.steps,
+                        expected: test.expected,
+                        priority: test.priority,
+                        prerequisites: test.prerequisites,
+                        status: 'Not Executed',
+                        actualResult: '',
+                        notes: '',
+                        executedBy: '',
+                        executionDate: '',
+                        objective: test.objective || '',
+                        author: test.author || '',
+                        regression: test.regression || 'No',
+                        type: test.type || 'Functional',
+                        complexity: test.complexity || 'Medium',
+                        automated: test.automated || 'No',
+                        fixVersion: test.fixVersion || '',
+                        sprint: test.sprint || ''
+                    });
+                });
+                updateDisplay();
+                showNotification(`Added ${templateTests.length} test cases from ${templateType.replace('-', ' ')} template`);
+            }
+        }
+
+        function addTestCase() {
+            const name = document.getElementById('testName').value.trim();
+            const category = document.getElementById('testCategory').value;
+            const steps = document.getElementById('testSteps').value.trim();
+            const expected = document.getElementById('expectedResult').value.trim();
+            const priority = document.getElementById('testPriority').value;
+            const prerequisites = document.getElementById('prerequisites').value.trim();
+            const objective = document.getElementById('testObjective').value.trim();
+            const author = document.getElementById('author').value.trim();
+            const regression = document.getElementById('regression').value;
+            const type = document.getElementById('type').value.trim();
+            const complexity = document.getElementById('complexity').value;
+            const automated = document.getElementById('automated').value;
+            const fixVersion = document.getElementById('fixVersion').value.trim();
+            const sprint = document.getElementById('sprint').value.trim();
+
+
+            if (!name || !steps) {
+                showNotification('Please fill in test name and test steps', 'error');
+                return;
+            }
+
+            const testCase = {
+                id: testIdCounter++,
+                name: name,
+                category: category,
+                steps: steps,
+                expected: expected || 'Test should complete without errors',
+                priority: priority,
+                prerequisites: prerequisites || 'None',
+                status: 'Not Executed',
+                actualResult: '',
+                notes: '',
+                executedBy: '',
+                executionDate: '',
+                objective: objective,
+                author: author,
+                regression: regression,
+                type: type,
+                complexity: complexity,
+                automated: automated,
+                fixVersion: fixVersion,
+                sprint: sprint
+            };
+
+            testCases.push(testCase);
+            
+            // Clear form
+            document.getElementById('testName').value = '';
+            document.getElementById('testSteps').value = '';
+            document.getElementById('expectedResult').value = '';
+            document.getElementById('prerequisites').value = '';
+            document.getElementById('testObjective').value = '';
+            document.getElementById('author').value = '';
+            document.getElementById('type').value = '';
+            document.getElementById('fixVersion').value = '';
+            document.getElementById('sprint').value = '';
+
+            updateDisplay();
+            showNotification('Test case added successfully');
+        }
+
+        function removeTestCase(id) {
+            testCases = testCases.filter(test => test.id !== id);
+            updateDisplay();
+            showNotification('Test case removed');
+        }
+
+        function generateRandomTests() {
+            const sampleTests = [
+                {
+                    name: 'User Registration Flow',
+                    category: 'Functional Tests',
+                    steps: '1. Navigate to registration page\n2. Fill required fields\n3. Submit form\n4. Verify confirmation',
+                    expected: 'User account created successfully',
+                    priority: 'High',
+                    objective: 'Verify new user signup process',
+                    author: 'QA Team',
+                    regression: 'Yes',
+                    type: 'Functional',
+                    complexity: 'Medium',
+                    automated: 'Yes',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'Data Export Function',
+                    category: 'Functional Tests',
+                    steps: '1. Access export feature\n2. Select data range\n3. Choose format\n4. Download file',
+                    expected: 'File downloads with correct data',
+                    priority: 'Medium',
+                    objective: 'Ensure data can be exported in various formats',
+                    author: 'QA Team',
+                    regression: 'Yes',
+                    type: 'Functional',
+                    complexity: 'Medium',
+                    automated: 'No',
+                    fixVersion: '1.0.1',
+                    sprint: 'Sprint 2'
+                },
+                {
+                    name: 'Search Functionality',
+                    category: 'Functional Tests',
+                    steps: '1. Enter search query\n2. Apply filters\n3. Review results\n4. Test pagination',
+                    expected: 'Relevant results displayed with pagination',
+                    priority: 'Medium',
+                    objective: 'Validate search and filtering capabilities',
+                    author: 'QA Team',
+                    regression: 'Yes',
+                    type: 'Functional',
+                    complexity: 'Medium',
+                    automated: 'No',
+                    fixVersion: '1.0.0',
+                    sprint: 'Sprint 1'
+                },
+                {
+                    name: 'Performance Load Test',
+                    category: 'Performance Tests',
+                    steps: '1. Generate concurrent requests\n2. Monitor response times\n3. Check resource usage\n4. Verify system stability',
+                    expected: 'System handles load within acceptable limits',
+                    priority: 'Low',
+                    objective: 'Assess system performance under various load conditions',
+                    author: 'Performance Team',
+                    regression: 'No',
+                    type: 'Performance',
+                    complexity: 'High',
+                    automated: 'Yes',
+                    fixVersion: '1.1.0',
+                    sprint: 'Sprint 3'
+                }
+            ];
+
+            const numTests = Math.floor(Math.random() * 3) + 2;
+            for (let i = 0; i < numTests; i++) {
+                const randomTest = sampleTests[Math.floor(Math.random() * sampleTests.length)];
+                testCases.push({
+                    id: testIdCounter++,
+                    name: randomTest.name,
+                    category: randomTest.category,
+                    steps: randomTest.steps,
+                    expected: randomTest.expected,
+                    priority: randomTest.priority,
+                    prerequisites: 'Standard test environment',
+                    status: 'Not Executed',
+                    actualResult: '',
+                    notes: '',
+                    executedBy: '',
+                    executionDate: '',
+                    objective: randomTest.objective,
+                    author: randomTest.author,
+                    regression: randomTest.regression,
+                    type: randomTest.type,
+                    complexity: randomTest.complexity,
+                    automated: randomTest.automated,
+                    fixVersion: randomTest.fixVersion,
+                    sprint: randomTest.sprint
+                });
+            }
+            
+            updateDisplay();
+            showNotification(`Added ${numTests} sample test cases`);
+        }
+
+        function clearAllTests() {
+            if (testCases.length === 0) {
+                showNotification('No test cases to clear', 'warning');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to clear all test cases?')) {
+                testCases = [];
+                updateDisplay();
+                showNotification('All test cases cleared');
+            }
+        }
+
+        function updateDisplay() {
+            const testCasesList = document.getElementById('testCasesList');
+            const totalTests = document.getElementById('totalTests');
+            const highPriorityTests = document.getElementById('highPriorityTests');
+            const categoriesCount = document.getElementById('categoriesCount');
+
+            totalTests.textContent = testCases.length;
+            highPriorityTests.textContent = testCases.filter(test => test.priority === 'High').length;
+            
+            const uniqueCategories = [...new Set(testCases.map(test => test.category))];
+            categoriesCount.textContent = uniqueCategories.length;
+
+            if (testCases.length === 0) {
+                testCasesList.innerHTML = '<div class="empty-state">No test cases added yet. Use templates or add custom test cases.</div>';
+                return;
+            }
+
+            testCasesList.innerHTML = testCases.map(test => `
+                <div class="test-case-item">
+                    <button class="remove-btn" onclick="removeTestCase(${test.id})" title="Remove test case">×</button>
+                    <h4>${test.name}</h4>
+                    <div class="test-case-meta">
+                        <span>Category: ${test.category}</span>
+                        <span class="priority-badge priority-${test.priority.toLowerCase()}">${test.priority}</span>
+                    </div>
+                    <p><strong>Expected:</strong> ${test.expected}</p>
+                    <div class="command-block">${test.steps.replace(/\n/g, '<br>')}</div>
+                </div>
+            `).join('');
+        }
+
+        function exportToExcel() {
+            if (testCases.length === 0) {
+                showNotification('Please add some test cases before exporting', 'error');
+                return;
+            }
+
+            const workbook = XLSX.utils.book_new();
+            
+            // Main test cases sheet
+            const excelData = testCases.map((test, index) => ({
+                'Test ID': `TC_${String(index + 1).padStart(3, '0')}`,
+                'Test Name': test.name,
+                'Category': test.category,
+                'Priority': test.priority,
+                'Prerequisites': test.prerequisites,
+                'Test Steps': test.steps,
+                'Expected Result': test.expected,
+                'Execution Status': test.status,
+                'Actual Result': test.actualResult,
+                'Pass/Fail': '',
+                'Notes': test.notes,
+                'Executed By': test.executedBy,
+                'Execution Date': test.executionDate,
+                'Test Objective': test.objective,
+                'Author': test.author,
+                'Regression': test.regression,
+                'Type': test.type,
+                'Complexity': test.complexity,
+                'Automated': test.automated,
+                'Fix Version/s': test.fixVersion,
+                'Sprint': test.sprint
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            
+            // Set column widths
+            worksheet['!cols'] = [
+                { wch: 10 }, { wch: 30 }, { wch: 18 }, { wch: 10 },
+                { wch: 25 }, { wch: 50 }, { wch: 35 }, { wch: 15 },
+                { wch: 35 }, { wch: 10 }, { wch: 25 }, { wch: 15 }, 
+                { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 10 }, 
+                { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 10 }
+            ];
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Test Cases');
+
+            // Summary sheet
+            const categories = testCases.reduce((acc, test) => {
+                acc[test.category] = (acc[test.category] || 0) + 1;
+                return acc;
+            }, {});
+
+            const summaryData = [
+                ['Metric', 'Count'],
+                ['Total Test Cases', testCases.length],
+                ['High Priority', testCases.filter(t => t.priority === 'High').length],
+                ['Medium Priority', testCases.filter(t => t.priority === 'Medium').length],
+                ['Low Priority', testCases.filter(t => t.priority === 'Low').length],
+                ['', ''],
+                ['Category Breakdown', ''],
+                ...Object.entries(categories).map(([category, count]) => [category, count])
+            ];
+
+            const summaryWorksheet = XLSX.utils.aoa_to_sheet(summaryData);
+            summaryWorksheet['!cols'] = [{ wch: 25 }, { wch: 15 }];
+            XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Summary');
+
+            // Export
+            const fileName = `TestCases_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+            
+            showNotification(`Excel file exported: ${fileName}`);
+        }
+
+        function exportToCSV() {
+            if (testCases.length === 0) {
+                showNotification('Please add some test cases before exporting', 'error');
+                return;
+            }
+
+            const csvData = testCases.map((test, index) => ({
+                'Test ID': `TC_${String(index + 1).padStart(3, '0')}`,
+                'Test Name': test.name,
+                'Category': test.category,
+                'Priority': test.priority,
+                'Prerequisites': test.prerequisites,
+                'Test Steps': test.steps.replace(/\n/g, ' | '),
+                'Expected Result': test.expected,
+                'Execution Status': test.status,
+                'Actual Result': test.actualResult,
+                'Pass/Fail': '',
+                'Notes': test.notes,
+                'Executed By': test.executedBy,
+                'Execution Date': test.executionDate,
+                'Test Objective': test.objective,
+                'Author': test.author,
+                'Regression': test.regression,
+                'Type': test.type,
+                'Complexity': test.complexity,
+                'Automated': test.automated,
+                'Fix Version/s': test.fixVersion,
+                'Sprint': test.sprint
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(csvData);
+            const csvString = XLSX.utils.sheet_to_csv(worksheet);
+            
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TestCases_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showNotification('CSV file exported successfully');
+        }
+
+        function exportUserStoryToExcel() {
+            const userStoryInput = prompt("Please paste your user story here:");
+            if (!userStoryInput) {
+                showNotification('User story input is empty.', 'warning');
+                return;
+            }
+
+            // A very basic attempt to parse a user story.
+            // In a real application, you'd need much more sophisticated NLP or a structured input.
+            const userStoryNameMatch = userStoryInput.match(/As a (.+?), I want (.+?) so that (.+?)/i);
+            const userStoryACs = userStoryInput.match(/AC\d*:\s*(.+?)(?=(AC\d*:|$))/gis);
+
+            let testName = "User Story Test";
+            let testObjective = "";
+            let testSteps = "";
+            let expectedResult = "";
+            let category = "Functional Tests";
+            let priority = "Medium";
+            let prerequisites = "";
+            let author = "User Story Importer";
+            let regression = "No";
+            let type = "Functional";
+            let complexity = "Medium";
+            let automated = "No";
+            let fixVersion = "";
+            let sprint = "";
+
+            if (userStoryNameMatch) {
+                testName = `${userStoryNameMatch[1]} can ${userStoryNameMatch[2]}`;
+                testObjective = userStoryNameMatch[3];
+            }
+
+            if (userStoryACs) {
+                userStoryACs.forEach((ac, index) => {
+                    const acContent = ac.replace(/AC\d*:\s*/, '').trim();
+                    testSteps += `${index + 1}. Verify ${acContent}\n`;
+                    if (index === 0) { // Take the first AC as the main expected result for simplicity
+                        expectedResult = acContent;
+                    }
+                });
+            } else {
+                 testSteps = "1. Parse user story details manually\n2. Verify the described functionality";
+                 expectedResult = "User story functionality is implemented and verified.";
+            }
+
+            // For the example user story: "restrict access to searching objects within app launchers with two different AC's and specific team member logins"
+            // We'll need to manually interpret and map
+            if (userStoryInput.includes("restrict access to searching objects within app launchers")) {
+                testName = "App Launcher Search Access Restriction";
+                testObjective = "To ensure only authorized team members can search specific objects within app launchers with correct access controls.";
+                testSteps = `1. Log in as Team Member A with AC1 (allowed access).
+2. Attempt to search for restricted objects within app launchers.
+3. Verify that restricted objects are visible.
+4. Log in as Team Member B with AC2 (restricted access).
+5. Attempt to search for restricted objects within app launchers.
+6. Verify that restricted objects are NOT visible.
+7. Log in as Team Member C with no specific AC, verify default access.`;
+                expectedResult = "Team members with AC1 can search restricted objects, Team members with AC2 cannot, and default access behaves as expected.";
+                category = "Security Tests";
+                priority = "High";
+                type = "Security";
+                complexity = "High";
+                prerequisites = "Configured app launchers, defined AC1 and AC2, and specific team member accounts.";
+            }
+
+
+            const userStoryTestCase = {
+                'Test ID': `US_${String(testIdCounter++).padStart(3, '0')}`,
+                'Test Name': testName,
+                'Test Objective': testObjective,
+                'Step Name': 'Verify User Story Functionality', // Can be refined if steps are more granular
+                'Description': testSteps, // Using steps as description for now
+                'Expected Result': expectedResult,
+                'Author': author,
+                'Priority': priority,
+                'Regression': regression,
+                'Type': type,
+                'Complexity': complexity,
+                'Automated': automated,
+                'Fix Version/s': fixVersion,
+                'Sprint': sprint
+            };
+
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet([userStoryTestCase]);
+
+            worksheet['!cols'] = [
+                { wch: 15 }, { wch: 40 }, { wch: 50 }, { wch: 30 },
+                { wch: 60 }, { wch: 40 }, { wch: 15 }, { wch: 10 },
+                { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+                { wch: 20 }, { wch: 15 }
+            ];
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'User Story Test Case');
+
+            const fileName = `UserStoryTest_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(workbook, fileName);
+            showNotification(`User Story Excel file exported: ${fileName}`);
+        }
+
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = 'notification show';
+            notification.textContent = message;
+            
+            if (type === 'error') {
+                notification.style.background = '#da3633';
+            } else if (type === 'warning') {
+                notification.style.background = '#fb8500';
+            }
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>
