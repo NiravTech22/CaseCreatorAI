@@ -1,1182 +1,1752 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Case Generator</title>
+    <title>TestCaseX - Professional Test Case Manager</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Lato:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
+        :root {
+            --primary: #A6192E;
+            --primary-hover: #8B1628;
+            --secondary: #FFD100;
+            --accent: linear-gradient(90deg, #FFE066 0%, #FFF9E3 100%);
+            --accent-solid: #FFE066;
+            --accent-hover: #FFE066;
+            --accent-border: #F5D442;
+            --bg: #faf9f7;
+            --panel: #fff;
+            --border: #e5e1dc;
+            --text: #2d2323;
+            --muted: #8a7c7c;
+            --danger: #d7263d;
+            --zebra: #f7f3ef;
+            --card-gradient: linear-gradient(135deg, #fff 0%, #f7f3ef 100%);
+        }
+        [data-theme="dark"] {
+            --primary: #FFD100;
+            --primary-hover: #FFB800;
+            --secondary: #A6192E;
+            --accent: #A6192E;
+            --bg: #181214;
+            --panel: #23191B;
+            --border: #3a2323;
+            --text: #fff8f0;
+            --muted: #bbaea7;
+            --danger: #ff4d4d;
+            --zebra: #23191B;
+            --card-gradient: linear-gradient(135deg, #23191B 0%, #2d2323 100%);
+        }
+        html, body {
+            font-family: 'Lato', 'Montserrat', 'IBM Plex Sans', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            line-height: 1.7;
+            transition: background 0.3s, color 0.3s;
         }
-
-        body {
-            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-            background: #0d1117;
-            color: #c9d1d9;
-            min-height: 100vh;
-            line-height: 1.6;
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.13;
+            background: repeating-linear-gradient(135deg, #FFD10011 0 2px, transparent 2px 32px);
         }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse 80% 60% at 70% 10%, #FFD10022 0%, transparent 100%),
+                        radial-gradient(ellipse 60% 40% at 20% 80%, #A6192E11 0%, transparent 100%);
+            animation: bgfade 8s ease-in-out infinite alternate;
         }
-
-        .header {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 24px;
-            margin-bottom: 24px;
+        @keyframes bgfade {
+            0% { opacity: 0.13; }
+            100% { opacity: 0.22; }
         }
-
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 600;
-            color: #f0f6fc;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            color: #8b949e;
-            font-size: 1rem;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        .panel {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 24px;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #f0f6fc;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #30363d;
-            padding-bottom: 8px;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: #f0f6fc;
-            font-size: 0.875rem;
-        }
-
-        .form-group input, 
-        .form-group select, 
-        .form-group textarea {
-            width: 100%;
-            padding: 8px 12px;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            color: #c9d1d9;
-            font-family: inherit;
-            font-size: 0.875rem;
-            transition: border-color 0.2s ease;
-        }
-
-        .form-group input:focus, 
-        .form-group select:focus, 
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .btn {
-            background: #21262d;
-            color: #c9d1d9;
-            border: 1px solid #30363d;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            font-family: inherit;
-            transition: all 0.2s ease;
-            margin: 4px;
-        }
-
-        .btn:hover {
-            background: #30363d;
-            border-color: #8b949e;
-        }
-
-        .btn-primary {
-            background: #238636;
-            border-color: #238636;
-            color: #ffffff;
-        }
-
-        .btn-primary:hover {
-            background: #2ea043;
-            border-color: #2ea043;
-        }
-
-        .btn-danger {
-            background: #da3633;
-            border-color: #da3633;
-            color: #ffffff;
-        }
-
-        .btn-danger:hover {
-            background: #f85149;
-            border-color: #f85149;
-        }
-
-        .btn-secondary {
-            background: #1f6feb;
-            border-color: #1f6feb;
-            color: #ffffff;
-        }
-
-        .btn-secondary:hover {
-            background: #58a6ff;
-            border-color: #58a6ff;
-        }
-
-        .templates {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .template-card {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .template-card:hover {
-            border-color: #58a6ff;
-            background: #161b22;
-        }
-
-        .template-card h4 {
-            color: #f0f6fc;
-            margin-bottom: 8px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .template-card p {
-            color: #8b949e;
-            font-size: 0.75rem;
-        }
-
-        .test-case-item {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 16px;
-            margin-bottom: 12px;
-            position: relative;
-        }
-
-        .test-case-item h4 {
-            color: #f0f6fc;
-            margin-bottom: 8px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-
-        .test-case-meta {
+        .dashboard {
             display: flex;
-            gap: 12px;
-            margin-bottom: 8px;
-            font-size: 0.75rem;
+            min-height: 100vh;
         }
-
-        .test-case-meta span {
-            color: #8b949e;
+        .sidebar {
+            width: 72px;
+            background: var(--panel);
+            border-right: 1.5px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 0 0 0;
+            min-height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 100;
         }
-
-        .priority-badge {
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.6875rem;
-            font-weight: 500;
-        }
-
-        .priority-high { background: #da3633; color: #ffffff; }
-        .priority-medium { background: #fb8500; color: #ffffff; }
-        .priority-low { background: #238636; color: #ffffff; }
-
-        .command-block {
-            background: #010409;
-            border: 1px solid #21262d;
-            border-radius: 6px;
-            padding: 12px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            color: #79c0ff;
-            margin-top: 8px;
-            overflow-x: auto;
-        }
-
-        .remove-btn {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: #da3633;
-            color: #ffffff;
-            border: none;
-            border-radius: 4px;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            font-size: 0.75rem;
+        .sidebar-logo {
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 32px;
         }
-
-        .remove-btn:hover {
-            background: #f85149;
+        .sidebar-logo svg {
+            width: 40px;
+            height: 40px;
+            display: block;
         }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .stat-card h3 {
-            font-size: 1.5rem;
-            color: #58a6ff;
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-
-        .stat-card p {
-            color: #8b949e;
-            font-size: 0.75rem;
-        }
-
-        .button-group {
+        .sidebar-nav {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            flex-direction: column;
+            gap: 24px;
+            margin-top: 24px;
+        }
+        .sidebar-nav a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 1.3em;
+            transition: color 0.18s;
+            position: relative;
+        }
+        .sidebar-nav a.active, .sidebar-nav a:hover {
+            color: var(--primary);
+        }
+        .sidebar-nav a.active::before {
+            content: '';
+            position: absolute;
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 28px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        .sidebar-nav a span {
+            font-size: 1.18em;
+        }
+        .sidebar-nav a span {
+            /* Remove emoji for a cleaner look */
+            font-family: inherit;
+        }
+        .container {
+            margin-left: 72px;
+            max-width: 1200px;
+            padding: 0 56px 40px 56px;
+            flex: 1;
+            box-sizing: border-box;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 24px 0 18px 0;
+            gap: 18px;
+            position: relative;
+        }
+        .secure-indicator {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 1.01em;
+            color: var(--primary);
+            font-weight: 600;
+            background: var(--panel);
+            border-radius: 8px;
+            padding: 4px 12px 4px 8px;
+            box-shadow: 0 1px 4px rgba(166,25,46,0.04);
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            letter-spacing: 0.01em;
+        }
+        .secure-indicator svg {
+            width: 18px;
+            height: 18px;
+            color: var(--primary);
+        }
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: var(--text);
+            margin-right: auto;
+        }
+        .theme-toggle {
+            position: relative;
+            width: 56px;
+            height: 28px;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: border 0.2s, background 0.2s;
+            box-shadow: 0 0 0 2px rgba(79,140,255,0.07);
+            outline: none;
+        }
+        .theme-toggle:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+        .theme-toggle .toggle-thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 60%, var(--primary-hover) 100%);
+            box-shadow: 0 0 8px 2px var(--primary);
+            transition: left 0.25s cubic-bezier(.7,1.7,.7,1), background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.1em;
+        }
+        [data-theme="dark"] .theme-toggle .toggle-thumb {
+            left: 31px;
+            background: linear-gradient(135deg, #23262c 60%, #4f8cff 100%);
+            box-shadow: 0 0 12px 2px #4f8cff;
+        }
+        .theme-toggle .toggle-icon {
+            position: absolute;
+            top: 50%;
+            left: 8px;
+            transform: translateY(-50%);
+            font-size: 1.1em;
+            color: var(--primary);
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+        .theme-toggle .toggle-icon.sun {
+            left: 8px;
+        }
+        .theme-toggle .toggle-icon.moon {
+            left: 32px;
+        }
+        [data-theme="dark"] .theme-toggle .toggle-icon.sun {
+            opacity: 0.3;
+        }
+        [data-theme="dark"] .theme-toggle .toggle-icon.moon {
+            opacity: 1;
+        }
+        [data-theme="light"] .theme-toggle .toggle-icon.sun {
+            opacity: 1;
+        }
+        [data-theme="light"] .theme-toggle .toggle-icon.moon {
+            opacity: 0.3;
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--zebra);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            color: var(--muted);
+            font-weight: 700;
+        }
+        .main {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 1fr;
+            gap: 72px;
+            align-items: flex-start;
             justify-content: center;
         }
-
+        .section-heading {
+            font-size: 1.25em;
+            font-weight: 800;
+            margin-bottom: 36px;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+        .form-card {
+            background: var(--panel);
+            border-radius: 16px;
+            border: 1.5px solid var(--border);
+            box-shadow: none;
+            padding: 0 0 32px 0;
+            min-width: 340px;
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-tabs {
+            display: flex;
+            border-bottom: 1.5px solid var(--border);
+            background: var(--panel);
+            margin: 0 0 8px 0;
+        }
+        .form-tab {
+            flex: 1;
+            text-align: center;
+            padding: 18px 0 10px 0;
+            font-size: 1.13em;
+            font-weight: 700;
+            color: var(--muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s, border-bottom 0.2s;
+            letter-spacing: 0.01em;
+        }
+        .form-tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background: var(--bg);
+        }
+        .form-section {
+            padding: 32px 32px 0 32px;
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+        }
+        .form-section label {
+            font-size: 1.13em;
+            color: var(--text);
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: block;
+            letter-spacing: 0.01em;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .form-section input, .form-section select, .form-section textarea {
+            font-size: 1.13em;
+            padding: 14px 0 6px 0;
+            border: none;
+            border-bottom: 2px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            width: 100%;
+            margin-bottom: 18px;
+            margin-top: 2px;
+            transition: border-bottom 0.2s, box-shadow 0.2s;
+            outline: none;
+            box-shadow: none;
+        }
+        .form-section input:focus, .form-section select:focus, .form-section textarea:focus {
+            border-bottom: 2px solid var(--primary);
+            box-shadow: 0 2px 0 0 var(--primary);
+        }
+        .form-section input:not(:placeholder-shown) + label,
+        .form-section input:focus + label,
+        .form-section textarea:not(:placeholder-shown) + label,
+        .form-section textarea:focus + label {
+            color: var(--primary);
+        }
+        .form-section input::placeholder, .form-section textarea::placeholder {
+            color: var(--muted);
+            opacity: 1;
+        }
+        .multi-select {
+            position: relative;
+            width: 100%;
+        }
+        .multi-select-selected {
+            min-height: 44px;
+            border: none;
+            border-bottom: 2px solid var(--border);
+            background: transparent;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 0 7px 0;
+            cursor: pointer;
+            transition: border-bottom 0.2s;
+        }
+        .multi-select-selected:focus, .multi-select-selected.active {
+            border-bottom: 2px solid var(--primary);
+        }
+        .multi-select .selected-pill {
+            background: var(--primary);
+            color: #fff;
+            border-radius: 999px;
+            padding: 3px 12px 3px 10px;
+            font-size: 1em;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .multi-select .remove-pill {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-left: 2px;
+        }
+        .multi-select-dropdown {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            width: 100%;
+            background: var(--panel);
+            border-radius: 9px;
+            box-shadow: 0 2px 12px rgba(20,20,30,0.06);
+            z-index: 10;
+            max-height: 180px;
+            overflow-y: auto;
+            display: none;
+        }
+        .multi-select-dropdown.active {
+            display: block;
+        }
+        .multi-select-option {
+            padding: 12px 18px;
+            cursor: pointer;
+            font-size: 1em;
+            color: var(--text);
+            transition: background 0.15s, color 0.15s;
+        }
+        .multi-select-option:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .multi-select-search {
+            width: 100%;
+            border: none;
+            outline: none;
+            padding: 10px 0 10px 0;
+            font-size: 1em;
+            background: transparent;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+        }
+        .ac-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .ac-card {
+            background: var(--panel);
+            border-radius: 10px;
+            border: 1.2px solid var(--border);
+            padding: 18px 16px 12px 16px;
+            margin-bottom: 0;
+            position: relative;
+        }
+        .ac-card h3 {
+            font-size: 1.08em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .ac-card .ac-steps {
+            margin-left: 0;
+            margin-bottom: 8px;
+        }
+        .ac-card .ac-step-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .ac-card .ac-step-row input {
+            flex: 1;
+        }
+        .ac-card .remove-ac-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .ac-card .remove-ac-btn:hover {
+            background: #b91c1c;
+        }
+        .add-ac-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 7px;
+            padding: 8px 18px;
+            font-size: 1.05em;
+            font-weight: 700;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: background 0.18s;
+        }
+        .add-ac-btn:hover {
+            background: var(--primary-hover);
+        }
+        .preview-panel {
+            background: var(--panel);
+            border-radius: 16px;
+            border: 1.5px solid var(--border);
+            box-shadow: none;
+            padding: 32px 24px 24px 24px;
+            min-width: 280px;
+            max-width: 340px;
+            width: 100%;
+            position: sticky;
+            top: 32px;
+        }
+        .preview-panel h2 {
+            font-size: 1.3rem;
+            font-weight: 900;
+            margin-bottom: 24px;
+            color: var(--text);
+        }
+        .testcase-list-section {
+            margin-top: 56px;
+        }
+        .testcase-list-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 18px;
+            justify-content: flex-end;
+        }
+        .testcase-list-header select {
+            font-size: 1em;
+            padding: 10px 0 10px 0;
+            border: none;
+            border-bottom: 2px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            margin-right: 4px;
+            transition: border-bottom 0.2s;
+        }
+        .testcase-list-header select:focus {
+            border-bottom: 2px solid var(--primary);
+        }
+        .export-btn {
+            background: var(--primary);
+            color: #fff;
+            border: 1.5px solid var(--primary);
+            border-radius: 22px;
+            padding: 10px 26px;
+            font-size: 1em;
+            font-family: 'Lato', 'Montserrat', 'IBM Plex Sans', Arial, sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 12px 0 #FFD10022, 0 1.5px 0 0 #fff inset;
+            transition: background 0.18s, box-shadow 0.18s, transform 0.18s, border 0.18s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            outline: none;
+            position: relative;
+        }
+        .export-btn:active {
+            transform: scale(0.97);
+        }
+        .export-btn:hover, .export-btn:focus {
+            background: var(--primary-hover);
+            box-shadow: 0 6px 24px 0 #FFD10033, 0 1.5px 0 0 #fff inset;
+            border-color: var(--primary-hover);
+            transform: translateY(-2px) scale(1.03);
+        }
+        .export-btn.secondary, .export-btn.accent {
+            background: var(--accent);
+            color: var(--primary);
+            border: 1.5px solid var(--accent-border);
+            box-shadow: 0 2px 16px 0 #FFD10022, 0 1.5px 0 0 #fff9e3 inset;
+        }
+        .export-btn.secondary:hover, .export-btn.secondary:focus,
+        .export-btn.accent:hover, .export-btn.accent:focus {
+            background: linear-gradient(90deg, #FFE066 0%, #FFF9E3 100%);
+            color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            box-shadow: 0 8px 32px 0 #FFD10033, 0 1.5px 0 0 #fff9e3 inset;
+            transform: translateY(-2px) scale(1.04);
+        }
+        .export-btn.accent .btn-icon {
+            color: var(--primary);
+        }
+        .export-btn .btn-icon {
+            font-size: 1.15em;
+            display: inline-flex;
+            align-items: center;
+            margin-right: 4px;
+        }
+        @media (max-width: 700px) {
+            .export-btn {
+                padding: 8px 10px;
+                font-size: 1.1em;
+                min-width: 0;
+                width: 40px;
+                justify-content: center;
+            }
+            .export-btn .btn-label {
+                display: none;
+            }
+            .export-btn .btn-icon {
+                margin-right: 0;
+            }
+        }
+        table.testcase-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--panel);
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            overflow: hidden;
+        }
+        table.testcase-table th, table.testcase-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            font-size: 0.98em;
+        }
+        table.testcase-table th {
+            background: var(--bg);
+            color: var(--primary);
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        table.testcase-table tr:nth-child(even) td {
+            background: var(--zebra);
+        }
+        table.testcase-table tr:hover td {
+            background: #eaf1fb;
+            transition: background 0.2s;
+        }
+        table.testcase-table tr:last-child td {
+            border-bottom: none;
+        }
+        .priority-high { background: var(--danger); color: #fff; border-radius: 7px; padding: 2px 8px; }
+        .priority-medium { background: #fb8500; color: #fff; border-radius: 7px; padding: 2px 8px; }
+        .priority-low { background: var(--primary); color: #fff; border-radius: 7px; padding: 2px 8px; }
         .empty-state {
             text-align: center;
-            color: #8b949e;
-            padding: 40px 20px;
-            border: 1px dashed #30363d;
-            border-radius: 6px;
+            color: var(--muted);
+            padding: 32px 12px;
+            border: 1.2px dashed var(--border);
+            border-radius: 7px;
         }
-
-        .notification {
+        @media (max-width: 1100px) {
+            .main { grid-template-columns: 1fr; gap: 32px; }
+            .form-card, .preview-panel { min-width: 100%; max-width: 100%; }
+        }
+        @media (max-width: 900px) {
+            .container { padding: 0 12px 24px 12px; margin-left: 56px; }
+            .main { grid-template-columns: 1fr; gap: 0; }
+            .preview-panel { position: static; max-width: 100%; min-width: 0; margin-top: 32px; }
+            .form-card { max-width: 100%; min-width: 0; }
+            .sidebar { width: 56px; padding: 16px 0 0 0; }
+        }
+        @media (max-width: 700px) {
+            .dashboard { flex-direction: column; }
+            .sidebar {
+                flex-direction: row;
+                width: 100vw;
+                height: 48px;
+                min-height: 0;
+                border-right: none;
+                border-bottom: 1.5px solid var(--border);
+                padding: 0 0 0 0;
+                align-items: center;
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 100;
+            }
+            .sidebar-logo { margin: 0 16px 0 8px; }
+            .sidebar-nav { flex-direction: row; gap: 0; margin: 0; }
+            .sidebar-nav a { flex: 1; padding: 0; }
+            .container { padding: 0 4vw 16vw 4vw; margin-left: 0; margin-top: 48px; box-sizing: border-box; }
+            .main { grid-template-columns: 1fr; gap: 0; }
+            .preview-panel { position: static; max-width: 100vw; min-width: 0; margin-top: 32px; }
+            .form-card { max-width: 100vw; min-width: 0; }
+            .header { flex-direction: column; gap: 12px; align-items: flex-start; }
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary) 60%, var(--primary-hover) 100%);
+            color: #fff;
+            border: none;
+            border-radius: 999px;
+            padding: 18px 0;
+            font-size: 1.13em;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+            width: 100%;
+            margin-top: 18px;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+            letter-spacing: 0.01em;
+        }
+        .btn-primary:hover, .btn-primary:focus {
+            background: linear-gradient(90deg, var(--primary-hover) 60%, var(--primary) 100%);
+            box-shadow: 0 8px 32px rgba(37,99,235,0.13);
+            transform: scale(1.03);
+        }
+        /* Chatbot styles */
+        .chatbot-btn {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #238636;
-            color: #ffffff;
-            padding: 12px 16px;
-            border-radius: 6px;
-            font-size: 0.875rem;
+            bottom: 32px;
+            right: 32px;
             z-index: 1000;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            box-shadow: 0 4px 24px rgba(80,120,200,0.13);
+            cursor: pointer;
+            transition: background 0.18s, box-shadow 0.18s;
         }
-
-        .notification.show {
-            transform: translateX(0);
+        .chatbot-btn:hover {
+            background: var(--primary-hover);
         }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .templates {
-                grid-template-columns: 1fr;
-            }
-            
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .chatbot-window {
+            position: fixed;
+            bottom: 100px;
+            right: 32px;
+            width: 340px;
+            max-width: 95vw;
+            background: var(--panel);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(80,120,200,0.13);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: chatbot-pop 0.18s cubic-bezier(.4,2,.6,1) both;
         }
+        @keyframes chatbot-pop {
+            0% { transform: translateY(40px) scale(0.95); opacity: 0; }
+            100% { transform: none; opacity: 1; }
+        }
+        .chatbot-header {
+            background: var(--bg);
+            padding: 16px 18px;
+            font-weight: 700;
+            color: var(--primary);
+            border-bottom: 1.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 1.3em;
+            cursor: pointer;
+        }
+        .chatbot-messages {
+            flex: 1;
+            padding: 18px 18px 8px 18px;
+            overflow-y: auto;
+            background: var(--panel);
+            font-size: 1em;
+        }
+        .chatbot-message {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .chatbot-message.bot {
+            color: var(--primary);
+        }
+        .chatbot-message.user {
+            color: var(--text);
+            justify-content: flex-end;
+        }
+        .chatbot-input-row {
+            display: flex;
+            border-top: 1.5px solid var(--border);
+            background: var(--panel);
+            padding: 10px 12px;
+        }
+        .chatbot-input-row input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 1em;
+            color: var(--text);
+            outline: none;
+            padding: 8px 0;
+        }
+        .chatbot-input-row button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 1em;
+            font-weight: 700;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: background 0.18s;
+        }
+        .chatbot-input-row button:hover {
+            background: var(--primary-hover);
+        }
+        .sidebar-nav a .icon {
+            font-size: 1.25em;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            transition: color 0.18s;
+        }
+        .sidebar-nav a .label {
+            display: inline-block;
+        }
+        .sidebar-nav a.active .icon,
+        .sidebar-nav a:hover .icon {
+            color: var(--primary);
+        }
+        /* Nova avatar glow */
+        .nova-avatar {
+            width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #FFD100 60%, #A6192E 100%);
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 0 #FFD10044;
+            animation: novaglow 2s infinite alternate;
+        }
+        @keyframes novaglow {
+            0% { box-shadow: 0 0 0 0 #FFD10044; }
+            100% { box-shadow: 0 0 16px 4px #FFD10088; }
+        }
+        .nova-typing { font-style: italic; color: var(--muted); opacity: 0.8; }
+        .ai-card { background: var(--panel); border-radius: 18px; border: 1.5px solid var(--accent-border); box-shadow: 0 4px 24px #FFD10022; padding: 32px 28px 24px 28px; margin: 0 auto 24px auto; max-width: 480px; position: relative; transition: box-shadow 0.18s, transform 0.18s; }
+        .ai-card:hover { box-shadow: 0 8px 32px #FFD10033; transform: translateY(-2px) scale(1.02); }
+        .ai-badge { background: var(--accent); color: var(--primary); font-weight: 700; border-radius: 8px; padding: 2px 10px; font-size: 0.98em; margin-left: 8px; }
+        .dashboard-metrics { display: flex; gap: 32px; margin: 32px 0 18px 0; align-items: center; }
+        .dashboard-metric { font-size: 1.18em; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .dashboard-metric .metric-count { font-size: 1.5em; color: var(--primary-hover); font-weight: 900; margin-right: 4px; transition: color 0.3s; }
+        .dashboard-metric .metric-icon { font-size: 1.2em; }
+        .dashboard-metric .ai-badge { margin-left: 0; }
+        .ripple { position: relative; overflow: hidden; }
+        .ripple:after { content: ''; position: absolute; border-radius: 50%; pointer-events: none; width: 100%; height: 100%; left: 0; top: 0; background: #FFD10044; opacity: 0; transition: opacity 0.4s; }
+        .ripple:active:after { opacity: 0.5; transition: 0s; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Test Case Generator</h1>
-            <p>Create, manage, and export test cases to Excel format</p>
-        </div>
-
-        <div class="main-content">
-            <div class="panel">
-                <h2 class="section-title">Configuration</h2>
-                
-                <div class="templates">
-                    <div class="template-card" onclick="loadTemplate('api-tests')">
-                        <h4>API Tests</h4>
-                        <p>REST API endpoint validation</p>
-                    </div>
-                    <div class="template-card" onclick="loadTemplate('ui-tests')">
-                        <h4>UI Tests</h4>
-                        <p>User interface testing scenarios</p>
-                    </div>
-                    <div class="template-card" onclick="loadTemplate('integration-tests')">
-                        <h4>Integration Tests</h4>
-                        <p>System integration validation</p>
-                    </div>
-                    <div class="template-card" onclick="loadTemplate('security-tests')">
-                        <h4>Security Tests</h4>
-                        <p>Security and authentication tests</p>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="testName">Test Case Name</label>
-                    <input type="text" id="testName" placeholder="Enter test case name">
-                </div>
-
-                <div class="form-group">
-                    <label for="testCategory">Category</label>
-                    <select id="testCategory">
-                        <option value="API Tests">API Tests</option>
-                        <option value="UI Tests">UI Tests</option>
-                        <option value="Integration Tests">Integration Tests</option>
-                        <option value="Security Tests">Security Tests</option>
-                        <option value="Performance Tests">Performance Tests</option>
-                        <option value="Database Tests">Database Tests</option>
-                        <option value="Functional Tests">Functional Tests</option>
-                        <option value="Regression Tests">Regression Tests</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="testSteps">Test Steps</label>
-                    <textarea id="testSteps" placeholder="1. Step one&#10;2. Step two&#10;3. Step three"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="expectedResult">Expected Result</label>
-                    <input type="text" id="expectedResult" placeholder="What should happen when test passes">
-                </div>
-
-                <div class="form-group">
-                    <label for="testPriority">Priority</label>
-                    <select id="testPriority">
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="prerequisites">Prerequisites</label>
-                    <input type="text" id="prerequisites" placeholder="Any setup required before test">
-                </div>
-
-                <div class="form-group">
-                    <label for="testObjective">Test Objective</label>
-                    <input type="text" id="testObjective" placeholder="What is the objective of this test?">
-                </div>
-                <div class="form-group">
-                    <label for="author">Author</label>
-                    <input type="text" id="author" placeholder="Test case author">
-                </div>
-                <div class="form-group">
-                    <label for="regression">Regression</label>
-                    <select id="regression">
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="type">Type</label>
-                    <input type="text" id="type" placeholder="e.g., Functional, Security, Performance">
-                </div>
-                <div class="form-group">
-                    <label for="complexity">Complexity</label>
-                    <select id="complexity">
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="automated">Automated</label>
-                    <select id="automated">
-                        <option value="No">No</option>
-                        <option value="Yes">Yes</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="fixVersion">Fix Version/s</label>
-                    <input type="text" id="fixVersion" placeholder="e.g., 1.0.0, 1.0.1">
-                </div>
-                <div class="form-group">
-                    <label for="sprint">Sprint</label>
-                    <input type="text" id="sprint" placeholder="e.g., Sprint 1, Sprint 2">
-                </div>
-
-
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="addTestCase()">Add Test Case</button>
-                    <button class="btn btn-secondary" onclick="generateRandomTests()">Generate Sample Tests</button>
-                    <button class="btn btn-danger" onclick="clearAllTests()">Clear All</button>
-                </div>
+    <div id="loginScreen" style="display:none;position:fixed;z-index:9999;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;">
+      <form id="loginForm" style="background:var(--panel);padding:48px 36px 36px 36px;border-radius:18px;box-shadow:0 8px 32px rgba(166,25,46,0.07);display:flex;flex-direction:column;gap:24px;min-width:320px;max-width:90vw;">
+        <div style="font-size:1.5em;font-weight:900;color:var(--primary);margin-bottom:8px;text-align:center;">TestaShield Login</div>
+        <label for="userIdInput" style="font-size:1.1em;font-weight:600;color:var(--text);">User ID</label>
+        <input id="userIdInput" type="text" placeholder="Enter your email or username" required style="font-size:1.1em;padding:14px 10px;border:none;border-bottom:2px solid var(--border);background:transparent;color:var(--text);outline:none;">
+        <button type="submit" class="btn-primary" style="margin-top:18px;">Login</button>
+      </form>
+    </div>
+    <div class="dashboard" id="mainApp" style="display:none;">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="20" r="18" fill="var(--panel)" stroke="var(--primary)" stroke-width="2.5"/>
+                  <path d="M13 22l5 5 9-11" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
             </div>
-
-            <div class="panel">
-                <h2 class="section-title">Test Cases Preview</h2>
-                
-                <div class="stats">
-                    <div class="stat-card">
-                        <h3 id="totalTests">0</h3>
-                        <p>Total Tests</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="highPriorityTests">0</h3>
-                        <p>High Priority</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="categoriesCount">0</h3>
-                        <p>Categories</p>
-                    </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="active" id="navTestCases" title="Dashboard" aria-label="Dashboard">
+                    <span class="icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="3" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="7" width="6" height="1.5" rx="0.75" fill="currentColor"/><rect x="7" y="10" width="6" height="1.5" rx="0.75" fill="currentColor"/></svg>
+                    </span>
+                </a>
+                <a href="#" id="navAiLab" title="AI Lab" aria-label="AI Lab">
+                    <span class="icon" aria-hidden="true">
+                        <!-- Beaker/lab flask icon -->
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M7 2v4.586a2 2 0 0 1-.586 1.414l-4.121 4.121A3 3 0 0 0 5.05 18h9.9a3 3 0 0 0 2.757-5.879l-4.121-4.121A2 2 0 0 1 13 6.586V2" stroke="#0ea5e9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          <rect x="7.5" y="2" width="5" height="1.5" rx="0.75" fill="#38bdf8"/>
+                          <ellipse cx="10" cy="15" rx="5" ry="2" fill="#e0f2fe"/>
+                        </svg>
+                    </span>
+                </a>
+                <a href="#" id="navSettings" title="Settings" aria-label="Settings">
+                    <span class="icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M16.24 7.76a1 1 0 0 0 .21-1.09l-1-1.73a1 1 0 0 0-1.09-.45l-1.9.48a7.03 7.03 0 0 0-1.1-.64l-.29-1.97A1 1 0 0 0 10 2h-2a1 1 0 0 0-.99 1.13l.29 1.97a7.03 7.03 0 0 0-1.1.64l-1.9-.48a1 1 0 0 0-1.09.45l-1 1.73a1 1 0 0 0 .21 1.09l1.52 1.52a7.03 7.03 0 0 0-.64 1.1l-1.97.29A1 1 0 0 0 2 10v2a1 1 0 0 0 1.13.99l1.97-.29a7.03 7.03 0 0 0 .64 1.1l-1.52 1.52a1 1 0 0 0-.21 1.09l1 1.73a1 1 0 0 0 1.09.45l1.9-.48a7.03 7.03 0 0 0 1.1.64l.29 1.97A1 1 0 0 0 10 18h2a1 1 0 0 0 .99-1.13l-.29-1.97a7.03 7.03 0 0 0 1.1-.64l1.9.48a1 1 0 0 0 1.09-.45l1-1.73a1 1 0 0 0-.21-1.09l-1.52-1.52a7.03 7.03 0 0 0 .64-1.1l1.97-.29A1 1 0 0 0 18 12v-2a1 1 0 0 0-1.13-.99l-1.97.29a7.03 7.03 0 0 0-.64-1.1l1.52-1.52z" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </span>
+                </a>
+            </nav>
+        </aside>
+        <div class="container">
+            <div class="header">
+                <span class="secure-indicator"><svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="9" width="10" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 9V7a3 3 0 1 1 6 0v2" stroke="currentColor" stroke-width="1.5"/></svg>Encrypted & Secure</span>
+                <span class="brand" style="color:var(--primary);font-family:'Montserrat',sans-serif;font-weight:900;font-size:1.45rem;letter-spacing:-1px;">TestaShield</span>
+                <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode" type="button" aria-label="Toggle dark mode">
+                    <span class="toggle-icon sun" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><g stroke="currentColor" stroke-width="1.2"><line x1="8" y1="1" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="1" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="15" y2="8"/><line x1="3.22" y1="3.22" x2="4.64" y2="4.64"/><line x1="11.36" y1="11.36" x2="12.78" y2="12.78"/><line x1="3.22" y1="12.78" x2="4.64" y2="11.36"/><line x1="11.36" y1="4.64" x2="12.78" y2="3.22"/></g></svg>
+                    </span>
+                    <span class="toggle-icon moon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a.5.5 0 0 0-.5.5v.5A6.5 6.5 0 1 0 14 11h-.5a.5.5 0 0 0-.5-.5Z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+                    </span>
+                    <span class="toggle-thumb"></span>
+                </button>
+                <span class="user-id-label" id="userIdLabel" style="color:var(--muted);font-size:1em;font-weight:600;margin-right:8px;"></span>
+                <span class="user-avatar">AB</span>
+            </div>
+            <div class="main" id="mainContent">
+                <div id="testCasePage">
+                    <div class="section-heading">Create Test Case</div>
+                    <form class="form-card" id="testCaseForm" autocomplete="off" onsubmit="event.preventDefault(); addTestCase();">
+                        <div class="form-tabs">
+                            <button type="button" class="form-tab active" data-tab="details">Details</button>
+                            <button type="button" class="form-tab" data-tab="ac">Acceptance Criteria</button>
+                            <button type="button" class="form-tab" data-tab="roles">Roles</button>
+                        </div>
+                        <div class="form-section active" id="tab-details">
+                            <label for="testName">Test Case Name</label>
+                            <input type="text" id="testName" placeholder="Test case name" required>
+                            <label for="userStoryId">User Story ID</label>
+                            <input type="text" id="userStoryId" placeholder="e.g. US-1234">
+                            <label for="testObjective">Objective</label>
+                            <input type="text" id="testObjective" placeholder="What is the objective?">
+                            <label for="testCategory">Category</label>
+                            <select id="testCategory">
+                                <option value="API Tests">API Tests</option>
+                                <option value="UI Tests">UI Tests</option>
+                                <option value="Integration Tests">Integration Tests</option>
+                                <option value="Security Tests">Security Tests</option>
+                                <option value="Performance Tests">Performance Tests</option>
+                                <option value="Database Tests">Database Tests</option>
+                                <option value="Functional Tests">Functional Tests</option>
+                                <option value="Regression Tests">Regression Tests</option>
+                            </select>
+                            <label for="testPriority">Priority</label>
+                            <select id="testPriority">
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <label for="expectedResult">Expected Result</label>
+                            <input type="text" id="expectedResult" placeholder="What should happen when test passes">
+                            <label for="prerequisites">Prerequisites</label>
+                            <input type="text" id="prerequisites" placeholder="Any setup required before test">
+                        </div>
+                        <div class="form-section" id="tab-ac">
+                            <label>Acceptance Criteria</label>
+                            <div class="ac-list" id="acList"></div>
+                            <button type="button" class="add-ac-btn" id="addAcBtn">+ Add AC</button>
+                        </div>
+                        <div class="form-section" id="tab-roles">
+                            <label>User Roles</label>
+                            <div class="multi-select" id="userRolesMultiSelect"></div>
+                        </div>
+                        <div style="margin:32px 28px 0 28px;display:flex;justify-content:flex-end;">
+                            <button class="btn-primary" type="submit">Add Test Case</button>
+                        </div>
+                    </form>
                 </div>
-
+                <div class="preview-panel" id="livePreview"></div>
+            </div>
+            <div class="testcase-list-section" id="testCaseListSection">
+                <div class="section-heading">Test Cases</div>
+                <div class="testcase-list-header">
+                    <button class="export-btn accent" id="mlPipelineBtn" title="Send to ML Pipeline">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 2v16M10 2l4 4M10 2L6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="15" r="2.5" fill="currentColor" opacity=".18"/></svg>
+                        </span>
+                        <span class="btn-label">ML Pipeline</span>
+                    </button>
+                    <select id="filterRole"><option value="">All Roles</option></select>
+                    <select id="filterPriority"><option value="">All Priorities</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+                    <select id="filterCategory"><option value="">All Categories</option></select>
+                    <button class="export-btn accent" onclick="exportToExcel()" title="Export XLSX">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 10l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="3" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.5"/></svg>
+                        </span>
+                        <span class="btn-label">Export XLSX</span>
+                    </button>
+                    <button class="export-btn accent" onclick="exportToCSV()" title="Export CSV">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 10l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="3" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.5"/></svg>
+                        </span>
+                        <span class="btn-label">Export CSV</span>
+                    </button>
+                </div>
                 <div id="testCasesList"></div>
-
-                <div class="button-group" style="margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="exportToExcel()">Export to Excel</button>
-                    <button class="btn" onclick="exportToCSV()">Export to CSV</button>
-                    <button class="btn btn-secondary" onclick="exportUserStoryToExcel()">Export User Story to Excel</button>
-                </div>
             </div>
+            <div id="settingsPage" style="display:none;min-height:400px;align-items:center;justify-content:center;flex-direction:column;text-align:center;">
+                <div class="section-heading">Settings</div>
+                <div style="color:var(--muted);font-size:1.1em;margin-top:32px;">Settings and integrations coming soon.</div>
+            </div>
+            <footer style="margin-top:48px;text-align:center;color:var(--muted);font-size:0.98em;padding:24px 0 0 0;">© 2024TestCaseX. All rights reserved.</footer>
         </div>
     </div>
-
+    <button class="chatbot-btn" id="chatbotBtn" title="Ask TestCaseX Assistant">💬</button>
+    <div class="chatbot-window" id="chatbotWindow" style="display:none;">
+        <div class="chatbot-header">TestCaseX Assistant <button class="chatbot-close" id="chatbotClose">×</button></div>
+        <div class="chatbot-messages" id="chatbotMessages">
+            <div class="chatbot-message bot">Hi! I'm your TestCaseX Assistant. Ask me anything about test case management, best practices, or how to use this app.</div>
+        </div>
+        <form class="chatbot-input-row" id="chatbotForm" autocomplete="off">
+            <input type="text" id="chatbotInput" placeholder="Type your question..." required />
+            <button type="submit">Send</button>
+        </form>
+    </div>
+    <!-- ML Results Modal -->
+    <div id="mlModal" style="display:none;position:fixed;z-index:99999;inset:0;background:rgba(0,0,0,0.18);align-items:center;justify-content:center;">
+      <div style="background:var(--panel);border-radius:16px;box-shadow:0 8px 32px rgba(166,25,46,0.13);padding:36px 32px 28px 32px;min-width:320px;max-width:90vw;position:relative;">
+        <button id="mlModalClose" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.5em;color:var(--muted);cursor:pointer;">&times;</button>
+        <div style="font-size:1.25em;font-weight:800;color:var(--primary);margin-bottom:18px;">ML Pipeline Results</div>
+        <div id="mlModalContent" style="color:var(--text);font-size:1.08em;"></div>
+      </div>
+    </div>
+    <!-- AI Generate Test Case Modal -->
+    <div id="aiModal" style="display:none;position:fixed;z-index:99999;inset:0;background:rgba(0,0,0,0.18);align-items:center;justify-content:center;">
+      <div style="background:var(--panel);border-radius:18px;box-shadow:0 8px 32px #FFD10033;padding:36px 32px 28px 32px;min-width:320px;max-width:90vw;position:relative;">
+        <button id="aiModalClose" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.5em;color:var(--muted);cursor:pointer;">&times;</button>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+          <span class="nova-avatar"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="10" fill="#FFD100"/><path d="M7 12l3 3 5-6" stroke="#A6192E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span style="font-size:1.18em;font-weight:800;color:var(--primary);">Generate Test Case with AI</span>
+        </div>
+        <form id="aiGenForm" style="display:flex;flex-direction:column;gap:18px;">
+          <label for="aiFeatureInput" style="font-size:1.08em;font-weight:600;color:var(--text);">Describe a feature or scenario</label>
+          <input id="aiFeatureInput" type="text" placeholder="e.g. Login, Wire transfer, Admin approval..." required style="font-size:1.1em;padding:14px 10px;border:none;border-bottom:2px solid var(--border);background:transparent;color:var(--text);outline:none;">
+          <button type="submit" class="export-btn accent ripple" style="margin-top:8px;">Generate</button>
+        </form>
+        <div id="aiTyping" class="nova-typing" style="display:none;margin-top:18px;">Nova is thinking...</div>
+        <div id="aiGenResult" style="margin-top:18px;"></div>
+      </div>
+    </div>
+    <div class="dashboard-metrics" id="dashboardMetrics">
+      <div class="dashboard-metric"><span class="metric-icon" aria-hidden="true">📋</span> <span class="metric-count" id="metricTotal">0</span> Test Cases</div>
+      <div class="dashboard-metric"><span class="metric-icon" aria-hidden="true">🤖</span> <span class="metric-count" id="metricAI">0</span> <span class="ai-badge">AI-generated</span></div>
+      <div class="dashboard-metric"><span class="metric-icon" aria-hidden="true">✨</span> <span class="metric-count" id="metricML">0</span> ML-prioritized</div>
+    </div>
+    <!-- AI Lab Page (no manual test case creator, modern/professional bot) -->
+    <div id="aiLabPage" style="display:none;min-height:80vh;padding:0 0 48px 0;">
+      <div style="max-width:540px;margin:0 auto;">
+        <div style="font-size:2.1em;font-weight:800;color:#1e293b;margin:48px 0 18px 0;letter-spacing:-1px;">AI Lab <span style="font-size:0.6em;font-weight:700;color:#0ea5e9;background:#e0f2fe;border-radius:8px;padding:2px 10px;vertical-align:middle;">Experimental</span></div>
+        <div style="background:rgba(245,250,255,0.98);backdrop-filter:blur(10px);border-radius:20px;padding:40px 36px 32px 36px;box-shadow:0 8px 32px #38bdf822;border:1.5px solid #e0f2fe;">
+          <form id="aiLabForm" style="display:flex;flex-direction:column;gap:22px;">
+            <label for="aiLabFeatureInput" style="font-size:1.18em;font-weight:700;color:#1e293b;letter-spacing:-0.5px;">Describe a feature or scenario to generate test cases for all roles</label>
+            <input id="aiLabFeatureInput" type="text" placeholder="e.g. Wire transfer approval, User onboarding, Transaction limits" required style="font-size:1.15em;padding:18px 14px;border:none;border-radius:14px;background:#f1f5f9;color:#1e293b;outline:none;box-shadow:0 1px 6px #38bdf822;font-family:inherit;">
+            <button type="submit" class="export-btn accent ripple" style="margin-top:8px;background:linear-gradient(90deg,#38bdf8 0%,#0ea5e9 100%);color:#fff;border:none;font-size:1.08em;font-weight:600;border-radius:10px;letter-spacing:0.5px;">Generate Test Cases</button>
+          </form>
+          <div id="aiLabTyping" class="nova-typing" style="display:none;margin-top:22px;font-size:1.08em;color:#64748b;">Generating test cases...</div>
+          <div id="aiLabResults" style="margin-top:32px;display:grid;gap:32px;"></div>
+        </div>
+      </div>
+    </div>
     <script>
-        let testCases = [];
-        let testIdCounter = 1;
+    // --- Theme Toggle ---
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        setTheme(current === 'dark' ? 'light' : 'dark');
+    }
+    document.getElementById('themeToggle').onclick = toggleTheme;
+    (function() {
+        let theme = localStorage.getItem('theme');
+        if (!theme) {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        setTheme(theme);
+    })();
 
-        const templates = {
-            'api-tests': [
-                {
-                    name: 'GET Request Test',
-                    category: 'API Tests',
-                    steps: '1. Send GET request to /api/users\n2. Verify response status code\n3. Validate response structure',
-                    expected: 'Returns 200 status with user list in JSON format',
-                    priority: 'High',
-                    prerequisites: 'API server running, valid endpoint',
-                    objective: 'Verify user list API endpoint functionality',
-                    author: 'QA Team',
-                    regression: 'Yes',
-                    type: 'Functional',
-                    complexity: 'Medium',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'POST Request Validation',
-                    category: 'API Tests',
-                    steps: '1. Send POST request with valid payload\n2. Check response status\n3. Verify created resource',
-                    expected: 'Returns 201 status with created resource details',
-                    priority: 'High',
-                    prerequisites: 'Valid authentication token',
-                    objective: 'Validate resource creation via POST API',
-                    author: 'Dev Team',
-                    regression: 'Yes',
-                    type: 'Functional',
-                    complexity: 'Medium',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'Error Handling Test',
-                    category: 'API Tests',
-                    steps: '1. Send request with invalid data\n2. Verify error response\n3. Check error message format',
-                    expected: 'Returns appropriate error code with descriptive message',
-                    priority: 'Medium',
-                    prerequisites: 'API documentation available',
-                    objective: 'Ensure robust error handling for API requests',
-                    author: 'QA Team',
-                    regression: 'No',
-                    type: 'Negative',
-                    complexity: 'Low',
-                    automated: 'No',
-                    fixVersion: '1.0.1',
-                    sprint: 'Sprint 2'
-                }
-            ],
-            'ui-tests': [
-                {
-                    name: 'Login Form Validation',
-                    category: 'UI Tests',
-                    steps: '1. Navigate to login page\n2. Enter valid credentials\n3. Click login button\n4. Verify successful login',
-                    expected: 'User is redirected to dashboard page',
-                    priority: 'High',
-                    prerequisites: 'Valid user account exists',
-                    objective: 'Verify user authentication flow via UI',
-                    author: 'QA Team',
-                    regression: 'Yes',
-                    type: 'Functional',
-                    complexity: 'Medium',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'Form Field Validation',
-                    category: 'UI Tests',
-                    steps: '1. Access form page\n2. Leave required fields empty\n3. Submit form\n4. Check validation messages',
-                    expected: 'Validation errors displayed for required fields',
-                    priority: 'Medium',
-                    prerequisites: 'Form with validation rules',
-                    objective: 'Test UI form validation for various inputs',
-                    author: 'QA Team',
-                    regression: 'No',
-                    type: 'Functional',
-                    complexity: 'Medium',
-                    automated: 'No',
-                    fixVersion: '1.0.1',
-                    sprint: 'Sprint 2'
-                },
-                {
-                    name: 'Navigation Menu Test',
-                    category: 'UI Tests',
-                    steps: '1. Load main page\n2. Click each menu item\n3. Verify page loads correctly',
-                    expected: 'All menu items navigate to correct pages',
-                    priority: 'Low',
-                    prerequisites: 'All pages implemented',
-                    objective: 'Verify navigation functionality across the application',
-                    author: 'QA Team',
-                    regression: 'Yes',
-                    type: 'Functional',
-                    complexity: 'Low',
-                    automated: 'No',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                }
-            ],
-            'integration-tests': [
-                {
-                    name: 'Database Connection Test',
-                    category: 'Integration Tests',
-                    steps: '1. Initialize database connection\n2. Execute test query\n3. Verify results\n4. Close connection',
-                    expected: 'Connection established and query executes successfully',
-                    priority: 'High',
-                    prerequisites: 'Database server running',
-                    objective: 'Ensure application can connect and interact with database',
-                    author: 'DevOps',
-                    regression: 'Yes',
-                    type: 'Integration',
-                    complexity: 'High',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'External API Integration',
-                    category: 'Integration Tests',
-                    steps: '1. Configure API client\n2. Make authenticated request\n3. Process response\n4. Handle errors',
-                    expected: 'External API responds correctly and data is processed',
-                    priority: 'High',
-                    prerequisites: 'External API access credentials',
-                    objective: 'Verify seamless integration with third-party APIs',
-                    author: 'Integration Team',
-                    regression: 'Yes',
-                    type: 'Integration',
-                    complexity: 'High',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'File System Integration',
-                    category: 'Integration Tests',
-                    steps: '1. Create test file\n2. Write data to file\n3. Read data back\n4. Clean up test file',
-                    expected: 'File operations complete without errors',
-                    priority: 'Medium',
-                    prerequisites: 'Write permissions to test directory',
-                    objective: 'Validate file system interactions and permissions',
-                    author: 'DevOps',
-                    regression: 'No',
-                    type: 'Integration',
-                    complexity: 'Medium',
-                    automated: 'Yes',
-                    fixVersion: '1.0.1',
-                    sprint: 'Sprint 2'
-                }
-            ],
-            'security-tests': [
-                {
-                    name: 'Authentication Test',
-                    category: 'Security Tests',
-                    steps: '1. Attempt access without token\n2. Verify access denied\n3. Test with valid token\n4. Confirm access granted',
-                    expected: 'Proper authentication enforcement',
-                    priority: 'High',
-                    prerequisites: 'Authentication system configured',
-                    objective: 'Ensure secure access control and authentication',
-                    author: 'Security Team',
-                    regression: 'Yes',
-                    type: 'Security',
-                    complexity: 'High',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'SQL Injection Test',
-                    category: 'Security Tests',
-                    steps: '1. Submit malicious SQL in input fields\n2. Monitor database logs\n3. Check response handling',
-                    expected: 'Input is sanitized, no SQL injection possible',
-                    priority: 'High',
-                    prerequisites: 'Database with monitoring enabled',
-                    objective: 'Protect against SQL injection vulnerabilities',
-                    author: 'Security Team',
-                    regression: 'Yes',
-                    type: 'Security',
-                    complexity: 'High',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'XSS Protection Test',
-                    category: 'Security Tests',
-                    steps: '1. Submit script tags in form inputs\n2. Verify output encoding\n3. Check script execution prevention',
-                    expected: 'Scripts are encoded and not executed',
-                    priority: 'High',
-                    prerequisites: 'Web application with forms',
-                    objective: 'Prevent Cross-Site Scripting (XSS) attacks',
-                    author: 'Security Team',
-                    regression: 'Yes',
-                    type: 'Security',
-                    complexity: 'Medium',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                }
-            ]
+    // --- Tabs/Stepper ---
+    document.querySelectorAll('.form-tab').forEach(tab => {
+        tab.onclick = function() {
+            document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('tab-' + this.dataset.tab).classList.add('active');
         };
+    });
 
-        function loadTemplate(templateType) {
-            const templateTests = templates[templateType];
-            if (templateTests) {
-                templateTests.forEach(test => {
-                    testCases.push({
-                        id: testIdCounter++,
-                        name: test.name,
-                        category: test.category,
-                        steps: test.steps,
-                        expected: test.expected,
-                        priority: test.priority,
-                        prerequisites: test.prerequisites,
-                        status: 'Not Executed',
-                        actualResult: '',
-                        notes: '',
-                        executedBy: '',
-                        executionDate: '',
-                        objective: test.objective || '',
-                        author: test.author || '',
-                        regression: test.regression || 'No',
-                        type: test.type || 'Functional',
-                        complexity: test.complexity || 'Medium',
-                        automated: test.automated || 'No',
-                        fixVersion: test.fixVersion || '',
-                        sprint: test.sprint || ''
-                    });
-                });
-                updateDisplay();
-                showNotification(`Added ${templateTests.length} test cases from ${templateType.replace('-', ' ')} template`);
-            }
-        }
-
-        function addTestCase() {
-            const name = document.getElementById('testName').value.trim();
-            const category = document.getElementById('testCategory').value;
-            const steps = document.getElementById('testSteps').value.trim();
-            const expected = document.getElementById('expectedResult').value.trim();
-            const priority = document.getElementById('testPriority').value;
-            const prerequisites = document.getElementById('prerequisites').value.trim();
-            const objective = document.getElementById('testObjective').value.trim();
-            const author = document.getElementById('author').value.trim();
-            const regression = document.getElementById('regression').value;
-            const type = document.getElementById('type').value.trim();
-            const complexity = document.getElementById('complexity').value;
-            const automated = document.getElementById('automated').value;
-            const fixVersion = document.getElementById('fixVersion').value.trim();
-            const sprint = document.getElementById('sprint').value.trim();
-
-
-            if (!name || !steps) {
-                showNotification('Please fill in test name and test steps', 'error');
-                return;
-            }
-
-            const testCase = {
-                id: testIdCounter++,
-                name: name,
-                category: category,
-                steps: steps,
-                expected: expected || 'Test should complete without errors',
-                priority: priority,
-                prerequisites: prerequisites || 'None',
-                status: 'Not Executed',
-                actualResult: '',
-                notes: '',
-                executedBy: '',
-                executionDate: '',
-                objective: objective,
-                author: author,
-                regression: regression,
-                type: type,
-                complexity: complexity,
-                automated: automated,
-                fixVersion: fixVersion,
-                sprint: sprint
+    // --- Multi-Select for Roles ---
+    const defaultRoles = [
+        'RM user','CM user','Team Lead User','Support user','Business Admin','Business Admin (Sales)','CSS Team Lead','CSS Team Member','Business Admin (Service)','BCC Team Lead','BCC','CPS Team Member','CPS Team Leader','Business Admin (CPS)'
+    ];
+    let userRolesList = [...defaultRoles];
+    let selectedRoles = [];
+    function renderUserRolesMultiSelect() {
+        const container = document.getElementById('userRolesMultiSelect');
+        container.innerHTML = '';
+        const selectedDiv = document.createElement('div');
+        selectedDiv.className = 'multi-select-selected';
+        selectedDiv.tabIndex = 0;
+        selectedDiv.onclick = function(e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+            selectedDiv.classList.toggle('active');
+            searchInput.focus();
+        };
+        // Pills
+        selectedRoles.forEach(role => {
+            const pill = document.createElement('span');
+            pill.className = 'selected-pill';
+            pill.textContent = role;
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-pill';
+            removeBtn.textContent = '×';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                selectedRoles = selectedRoles.filter(r => r !== role);
+                renderUserRolesMultiSelect();
+                updateLivePreview();
             };
-
-            testCases.push(testCase);
-            
-            // Clear form
-            document.getElementById('testName').value = '';
-            document.getElementById('testSteps').value = '';
-            document.getElementById('expectedResult').value = '';
-            document.getElementById('prerequisites').value = '';
-            document.getElementById('testObjective').value = '';
-            document.getElementById('author').value = '';
-            document.getElementById('type').value = '';
-            document.getElementById('fixVersion').value = '';
-            document.getElementById('sprint').value = '';
-
-            updateDisplay();
-            showNotification('Test case added successfully');
+            pill.appendChild(removeBtn);
+            selectedDiv.appendChild(pill);
+        });
+        if (!selectedRoles.length) {
+            const placeholder = document.createElement('span');
+            placeholder.style.color = 'var(--muted)';
+            placeholder.textContent = 'Select user roles...';
+            selectedDiv.appendChild(placeholder);
         }
-
-        function removeTestCase(id) {
-            testCases = testCases.filter(test => test.id !== id);
-            updateDisplay();
-            showNotification('Test case removed');
+        container.appendChild(selectedDiv);
+        // Dropdown
+        const dropdown = document.createElement('div');
+        dropdown.className = 'multi-select-dropdown';
+        // Search
+        const searchInput = document.createElement('input');
+        searchInput.className = 'multi-select-search';
+        searchInput.placeholder = 'Search or add role...';
+        dropdown.appendChild(searchInput);
+        // Options
+        function renderOptions(filter = '') {
+            dropdown.querySelectorAll('.multi-select-option').forEach(e => e.remove());
+            userRolesList.filter(role => role.toLowerCase().includes(filter.toLowerCase())).forEach(role => {
+                const opt = document.createElement('div');
+                opt.className = 'multi-select-option';
+                opt.textContent = role;
+                opt.onclick = () => {
+                    if (!selectedRoles.includes(role)) selectedRoles.push(role);
+                    renderUserRolesMultiSelect();
+                    updateLivePreview();
+                };
+                dropdown.appendChild(opt);
+            });
         }
+        renderOptions();
+        searchInput.oninput = function() {
+            renderOptions(this.value);
+        };
+        searchInput.onkeydown = function(e) {
+            if (e.key === 'Enter' && this.value.trim()) {
+                const val = this.value.trim();
+                if (!userRolesList.includes(val)) userRolesList.push(val);
+                if (!selectedRoles.includes(val)) selectedRoles.push(val);
+                renderUserRolesMultiSelect();
+                updateLivePreview();
+            }
+        };
+        document.addEventListener('click', function closeDropdown(e) {
+            dropdown.classList.remove('active');
+            selectedDiv.classList.remove('active');
+        }, { once: true });
+        container.appendChild(dropdown);
+    }
+    renderUserRolesMultiSelect();
 
-        function generateRandomTests() {
-            const sampleTests = [
-                {
-                    name: 'User Registration Flow',
-                    category: 'Functional Tests',
-                    steps: '1. Navigate to registration page\n2. Fill required fields\n3. Submit form\n4. Verify confirmation',
-                    expected: 'User account created successfully',
-                    priority: 'High',
-                    objective: 'Verify new user signup process',
-                    author: 'QA Team',
-                    regression: 'Yes',
-                    type: 'Functional',
-                    complexity: 'Medium',
-                    automated: 'Yes',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'Data Export Function',
-                    category: 'Functional Tests',
-                    steps: '1. Access export feature\n2. Select data range\n3. Choose format\n4. Download file',
-                    expected: 'File downloads with correct data',
-                    priority: 'Medium',
-                    objective: 'Ensure data can be exported in various formats',
-                    author: 'QA Team',
-                    regression: 'Yes',
-                    type: 'Functional',
-                    complexity: 'Medium',
-                    automated: 'No',
-                    fixVersion: '1.0.1',
-                    sprint: 'Sprint 2'
-                },
-                {
-                    name: 'Search Functionality',
-                    category: 'Functional Tests',
-                    steps: '1. Enter search query\n2. Apply filters\n3. Review results\n4. Test pagination',
-                    expected: 'Relevant results displayed with pagination',
-                    priority: 'Medium',
-                    objective: 'Validate search and filtering capabilities',
-                    author: 'QA Team',
-                    regression: 'Yes',
-                    type: 'Functional',
-                    complexity: 'Medium',
-                    automated: 'No',
-                    fixVersion: '1.0.0',
-                    sprint: 'Sprint 1'
-                },
-                {
-                    name: 'Performance Load Test',
-                    category: 'Performance Tests',
-                    steps: '1. Generate concurrent requests\n2. Monitor response times\n3. Check resource usage\n4. Verify system stability',
-                    expected: 'System handles load within acceptable limits',
-                    priority: 'Low',
-                    objective: 'Assess system performance under various load conditions',
-                    author: 'Performance Team',
-                    regression: 'No',
-                    type: 'Performance',
-                    complexity: 'High',
-                    automated: 'Yes',
-                    fixVersion: '1.1.0',
-                    sprint: 'Sprint 3'
-                }
-            ];
+    // --- Acceptance Criteria ---
+    let acList = [];
+    function renderAcList() {
+        const acListDiv = document.getElementById('acList');
+        acListDiv.innerHTML = '';
+        acList.forEach((ac, acIdx) => {
+            const acCard = document.createElement('div');
+            acCard.className = 'ac-card';
+            acCard.innerHTML = `<h3 contenteditable="true" oninput="acList[${acIdx}].title=this.textContent;updateLivePreview();">${ac.title}</h3>`;
+            const stepsDiv = document.createElement('div');
+            stepsDiv.className = 'ac-steps';
+            ac.steps.forEach((step, stepIdx) => {
+                const row = document.createElement('div');
+                row.className = 'ac-step-row';
+                const inp = document.createElement('input');
+                inp.type = 'text';
+                inp.value = step;
+                inp.placeholder = `Step ${stepIdx+1}`;
+                inp.oninput = e => { acList[acIdx].steps[stepIdx] = e.target.value; updateLivePreview(); };
+                row.appendChild(inp);
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-danger';
+                delBtn.textContent = '✕';
+                delBtn.onclick = () => { acList[acIdx].steps.splice(stepIdx,1); renderAcList(); updateLivePreview(); };
+                row.appendChild(delBtn);
+                stepsDiv.appendChild(row);
+            });
+            // Add step button
+            const addStepBtn = document.createElement('button');
+            addStepBtn.className = 'add-ac-btn';
+            addStepBtn.textContent = '+ Add Step';
+            addStepBtn.onclick = () => { acList[acIdx].steps.push(''); renderAcList(); updateLivePreview(); };
+            stepsDiv.appendChild(addStepBtn);
+            acCard.appendChild(stepsDiv);
+            // Remove AC button
+            const removeAcBtn = document.createElement('button');
+            removeAcBtn.className = 'remove-ac-btn';
+            removeAcBtn.textContent = '✕';
+            removeAcBtn.onclick = () => { acList.splice(acIdx,1); renderAcList(); updateLivePreview(); };
+            acCard.appendChild(removeAcBtn);
+            acListDiv.appendChild(acCard);
+        });
+    }
+    document.getElementById('addAcBtn').onclick = function() {
+        acList.push({ title: 'Acceptance Criteria', steps: [''] });
+        renderAcList();
+        updateLivePreview();
+    };
+    renderAcList();
 
-            const numTests = Math.floor(Math.random() * 3) + 2;
-            for (let i = 0; i < numTests; i++) {
-                const randomTest = sampleTests[Math.floor(Math.random() * sampleTests.length)];
-                testCases.push({
-                    id: testIdCounter++,
-                    name: randomTest.name,
-                    category: randomTest.category,
-                    steps: randomTest.steps,
-                    expected: randomTest.expected,
-                    priority: randomTest.priority,
-                    prerequisites: 'Standard test environment',
-                    status: 'Not Executed',
-                    actualResult: '',
-                    notes: '',
-                    executedBy: '',
-                    executionDate: '',
-                    objective: randomTest.objective,
-                    author: randomTest.author,
-                    regression: randomTest.regression,
-                    type: randomTest.type,
-                    complexity: randomTest.complexity,
-                    automated: randomTest.automated,
-                    fixVersion: randomTest.fixVersion,
-                    sprint: randomTest.sprint
+    // --- Live Preview ---
+    function updateLivePreview() {
+        const name = document.getElementById('testName').value.trim();
+        const userStoryId = document.getElementById('userStoryId').value.trim();
+        const objective = document.getElementById('testObjective').value.trim();
+        const userRoles = [...selectedRoles];
+        const category = document.getElementById('testCategory').value;
+        const priority = document.getElementById('testPriority').value;
+        const expected = document.getElementById('expectedResult').value.trim();
+        const prerequisites = document.getElementById('prerequisites').value.trim();
+        let html = '';
+        html += `<h2>Live Preview</h2>`;
+        if (name) html += `<div><strong>Name:</strong> ${name}</div>`;
+        if (userStoryId) html += `<div><strong>User Story ID:</strong> ${userStoryId}</div>`;
+        if (objective) html += `<div><strong>Objective:</strong> ${objective}</div>`;
+        if (userRoles.length) html += `<div><strong>User Roles:</strong> ${userRoles.join(', ')}</div>`;
+        if (category) html += `<div><strong>Category:</strong> ${category}</div>`;
+        if (priority) html += `<div><strong>Priority:</strong> ${priority}</div>`;
+        if (expected) html += `<div><strong>Expected:</strong> ${expected}</div>`;
+        if (prerequisites) html += `<div><strong>Prerequisites:</strong> ${prerequisites}</div>`;
+        if (acList.length) {
+            html += `<div><strong>Acceptance Criteria:</strong><ul>`;
+            acList.forEach(ac => {
+                html += `<li><strong>${ac.title}</strong><ul>`;
+                ac.steps.forEach(step => {
+                    html += `<li>${step}</li>`;
                 });
-            }
-            
-            updateDisplay();
-            showNotification(`Added ${numTests} sample test cases`);
+                html += `</ul></li>`;
+            });
+            html += `</ul></div>`;
         }
-
-        function clearAllTests() {
-            if (testCases.length === 0) {
-                showNotification('No test cases to clear', 'warning');
-                return;
-            }
-            
-            if (confirm('Are you sure you want to clear all test cases?')) {
-                testCases = [];
-                updateDisplay();
-                showNotification('All test cases cleared');
-            }
+        document.getElementById('livePreview').innerHTML = html || '<span style="color:var(--muted);">Fill out the form to preview your test case here.</span>';
+    }
+    [
+        'testName','userStoryId','testObjective','expectedResult','prerequisites','testCategory','testPriority'
+    ].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateLivePreview);
+    });
+    // --- Add Test Case ---
+    let testCases = [];
+    function addTestCase() {
+        const name = document.getElementById('testName').value.trim();
+        const userStoryId = document.getElementById('userStoryId').value.trim();
+        const objective = document.getElementById('testObjective').value.trim();
+        const userRoles = [...selectedRoles];
+        const category = document.getElementById('testCategory').value;
+        const priority = document.getElementById('testPriority').value;
+        const expected = document.getElementById('expectedResult').value.trim();
+        const prerequisites = document.getElementById('prerequisites').value.trim();
+        if (!name || !userRoles.length || !acList.length) {
+            alert('Please fill in test name, select at least one user role, and add at least one acceptance criteria.');
+            return;
         }
-
-        function updateDisplay() {
-            const testCasesList = document.getElementById('testCasesList');
-            const totalTests = document.getElementById('totalTests');
-            const highPriorityTests = document.getElementById('highPriorityTests');
-            const categoriesCount = document.getElementById('categoriesCount');
-
-            totalTests.textContent = testCases.length;
-            highPriorityTests.textContent = testCases.filter(test => test.priority === 'High').length;
-            
-            const uniqueCategories = [...new Set(testCases.map(test => test.category))];
-            categoriesCount.textContent = uniqueCategories.length;
-
-            if (testCases.length === 0) {
-                testCasesList.innerHTML = '<div class="empty-state">No test cases added yet. Use templates or add custom test cases.</div>';
-                return;
-            }
-
-            testCasesList.innerHTML = testCases.map(test => `
-                <div class="test-case-item">
-                    <button class="remove-btn" onclick="removeTestCase(${test.id})" title="Remove test case">×</button>
-                    <h4>${test.name}</h4>
-                    <div class="test-case-meta">
-                        <span>Category: ${test.category}</span>
-                        <span class="priority-badge priority-${test.priority.toLowerCase()}">${test.priority}</span>
-                    </div>
-                    <p><strong>Expected:</strong> ${test.expected}</p>
-                    <div class="command-block">${test.steps.replace(/\n/g, '<br>')}</div>
-                </div>
-            `).join('');
+        testCases.push({
+            id: Date.now(),
+            name,
+            userStoryId,
+            objective,
+            userRoles,
+            category,
+            priority,
+            expected,
+            prerequisites,
+            acceptanceCriteria: JSON.parse(JSON.stringify(acList))
+        });
+        // Reset form
+        document.getElementById('testCaseForm').reset();
+        selectedRoles = [];
+        renderUserRolesMultiSelect();
+        acList = [];
+        renderAcList();
+        updateLivePreview();
+        renderTestCaseList();
+    }
+    // --- Test Case List & Filter ---
+    function renderTestCaseList() {
+        // Update filter options
+        const filterRole = document.getElementById('filterRole');
+        const filterCategory = document.getElementById('filterCategory');
+        const allRoles = Array.from(new Set(testCases.flatMap(tc => tc.userRoles)));
+        filterRole.innerHTML = '<option value="">All Roles</option>' + allRoles.map(r => `<option value="${r}">${r}</option>`).join('');
+        const allCats = Array.from(new Set(testCases.map(tc => tc.category)));
+        filterCategory.innerHTML = '<option value="">All Categories</option>' + allCats.map(c => `<option value="${c}">${c}</option>`).join('');
+        // Filtering
+        const roleVal = filterRole.value;
+        const catVal = filterCategory.value;
+        const priorityVal = document.getElementById('filterPriority').value;
+        let filtered = testCases.filter(tc => {
+            let match = true;
+            if (roleVal) match = match && tc.userRoles.includes(roleVal);
+            if (catVal) match = match && tc.category === catVal;
+            if (priorityVal) match = match && tc.priority === priorityVal;
+            return match;
+        });
+        const listDiv = document.getElementById('testCasesList');
+        if (!filtered.length) {
+            listDiv.innerHTML = '<div class="empty-state">No test cases match the filter. Add or adjust filters.</div>';
+            return;
         }
-
-        function exportToExcel() {
-            if (testCases.length === 0) {
-                showNotification('Please add some test cases before exporting', 'error');
-                return;
-            }
-
-            const workbook = XLSX.utils.book_new();
-            
-            // Main test cases sheet
-            const excelData = testCases.map((test, index) => ({
-                'Test ID': `TC_${String(index + 1).padStart(3, '0')}`,
-                'Test Name': test.name,
-                'Category': test.category,
-                'Priority': test.priority,
-                'Prerequisites': test.prerequisites,
-                'Test Steps': test.steps,
-                'Expected Result': test.expected,
-                'Execution Status': test.status,
-                'Actual Result': test.actualResult,
-                'Pass/Fail': '',
-                'Notes': test.notes,
-                'Executed By': test.executedBy,
-                'Execution Date': test.executionDate,
-                'Test Objective': test.objective,
-                'Author': test.author,
-                'Regression': test.regression,
-                'Type': test.type,
-                'Complexity': test.complexity,
-                'Automated': test.automated,
-                'Fix Version/s': test.fixVersion,
-                'Sprint': test.sprint
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(excelData);
-            
-            // Set column widths
-            worksheet['!cols'] = [
-                { wch: 10 }, { wch: 30 }, { wch: 18 }, { wch: 10 },
-                { wch: 25 }, { wch: 50 }, { wch: 35 }, { wch: 15 },
-                { wch: 35 }, { wch: 10 }, { wch: 25 }, { wch: 15 }, 
-                { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 10 }, 
-                { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 10 }
-            ];
-
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Test Cases');
-
-            // Summary sheet
-            const categories = testCases.reduce((acc, test) => {
-                acc[test.category] = (acc[test.category] || 0) + 1;
-                return acc;
-            }, {});
-
-            const summaryData = [
-                ['Metric', 'Count'],
-                ['Total Test Cases', testCases.length],
-                ['High Priority', testCases.filter(t => t.priority === 'High').length],
-                ['Medium Priority', testCases.filter(t => t.priority === 'Medium').length],
-                ['Low Priority', testCases.filter(t => t.priority === 'Low').length],
-                ['', ''],
-                ['Category Breakdown', ''],
-                ...Object.entries(categories).map(([category, count]) => [category, count])
-            ];
-
-            const summaryWorksheet = XLSX.utils.aoa_to_sheet(summaryData);
-            summaryWorksheet['!cols'] = [{ wch: 25 }, { wch: 15 }];
-            XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Summary');
-
-            // Export
-            const fileName = `TestCases_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(workbook, fileName);
-            
-            showNotification(`Excel file exported: ${fileName}`);
+        // Table
+        let html = `<table class="testcase-table"><thead><tr>
+            <th>Name</th><th>User Story ID</th><th>Objective</th><th>Roles</th><th>Category</th><th>Priority</th><th>Expected</th><th>Prerequisites</th><th>Acceptance Criteria</th>
+        </tr></thead><tbody>`;
+        filtered.forEach(tc => {
+            html += `<tr>
+                <td>${tc.name}</td>
+                <td>${tc.userStoryId}</td>
+                <td>${tc.objective}</td>
+                <td>${tc.userRoles.join(', ')}</td>
+                <td>${tc.category}</td>
+                <td><span class="priority-badge priority-${tc.priority.toLowerCase()}">${tc.priority}</span></td>
+                <td>${tc.expected}</td>
+                <td>${tc.prerequisites}</td>
+                <td>${tc.acceptanceCriteria.map(ac => `<strong>${ac.title}</strong>: ${ac.steps.join(' | ')}`).join('<br>')}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        listDiv.innerHTML = html;
+    }
+    ['filterRole','filterPriority','filterCategory'].forEach(id => {
+        document.getElementById(id).onchange = renderTestCaseList;
+    });
+    // --- Export ---
+    function exportToExcel() {
+        if (testCases.length === 0) {
+            alert('Please add some test cases before exporting');
+            return;
         }
-
-        function exportToCSV() {
-            if (testCases.length === 0) {
-                showNotification('Please add some test cases before exporting', 'error');
-                return;
-            }
-
-            const csvData = testCases.map((test, index) => ({
-                'Test ID': `TC_${String(index + 1).padStart(3, '0')}`,
-                'Test Name': test.name,
-                'Category': test.category,
-                'Priority': test.priority,
-                'Prerequisites': test.prerequisites,
-                'Test Steps': test.steps.replace(/\n/g, ' | '),
-                'Expected Result': test.expected,
-                'Execution Status': test.status,
-                'Actual Result': test.actualResult,
-                'Pass/Fail': '',
-                'Notes': test.notes,
-                'Executed By': test.executedBy,
-                'Execution Date': test.executionDate,
-                'Test Objective': test.objective,
-                'Author': test.author,
-                'Regression': test.regression,
-                'Type': test.type,
-                'Complexity': test.complexity,
-                'Automated': test.automated,
-                'Fix Version/s': test.fixVersion,
-                'Sprint': test.sprint
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(csvData);
-            const csvString = XLSX.utils.sheet_to_csv(worksheet);
-            
-            const blob = new Blob([csvString], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `TestCases_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            
-            showNotification('CSV file exported successfully');
-        }
-
-        function exportUserStoryToExcel() {
-            const userStoryInput = prompt("Please paste your user story here:");
-            if (!userStoryInput) {
-                showNotification('User story input is empty.', 'warning');
-                return;
-            }
-
-            // A very basic attempt to parse a user story.
-            // In a real application, you'd need much more sophisticated NLP or a structured input.
-            const userStoryNameMatch = userStoryInput.match(/As a (.+?), I want (.+?) so that (.+?)/i);
-            const userStoryACs = userStoryInput.match(/AC\d*:\s*(.+?)(?=(AC\d*:|$))/gis);
-
-            let testName = "User Story Test";
-            let testObjective = "";
-            let testSteps = "";
-            let expectedResult = "";
-            let category = "Functional Tests";
-            let priority = "Medium";
-            let prerequisites = "";
-            let author = "User Story Importer";
-            let regression = "No";
-            let type = "Functional";
-            let complexity = "Medium";
-            let automated = "No";
-            let fixVersion = "";
-            let sprint = "";
-
-            if (userStoryNameMatch) {
-                testName = `${userStoryNameMatch[1]} can ${userStoryNameMatch[2]}`;
-                testObjective = userStoryNameMatch[3];
-            }
-
-            if (userStoryACs) {
-                userStoryACs.forEach((ac, index) => {
-                    const acContent = ac.replace(/AC\d*:\s*/, '').trim();
-                    testSteps += `${index + 1}. Verify ${acContent}\n`;
-                    if (index === 0) { // Take the first AC as the main expected result for simplicity
-                        expectedResult = acContent;
-                    }
+        const workbook = XLSX.utils.book_new();
+        let excelData = [];
+        testCases.forEach((test, index) => {
+            const roles = (test.userRoles && test.userRoles.length) ? test.userRoles : [''];
+            roles.forEach(role => {
+                excelData.push({
+                    'Test ID': `TC_${String(index + 1).padStart(3, '0')}`,
+                    'User Story ID': test.userStoryId || '',
+                    'Test Name': test.name,
+                    'Category': test.category,
+                    'Priority': test.priority,
+                    'User Role': role,
+                    'Prerequisites': test.prerequisites,
+                    'Acceptance Criteria': (test.acceptanceCriteria && test.acceptanceCriteria.length) ? test.acceptanceCriteria.map(ac => `${ac.title}: ${ac.steps.join(' | ')}`).join(' || ') : '',
+                    'Expected Result': test.expected,
+                    'Test Objective': test.objective
                 });
-            } else {
-                 testSteps = "1. Parse user story details manually\n2. Verify the described functionality";
-                 expectedResult = "User story functionality is implemented and verified.";
-            }
-
-            // For the example user story: "restrict access to searching objects within app launchers with two different AC's and specific team member logins"
-            // We'll need to manually interpret and map
-            if (userStoryInput.includes("restrict access to searching objects within app launchers")) {
-                testName = "App Launcher Search Access Restriction";
-                testObjective = "To ensure only authorized team members can search specific objects within app launchers with correct access controls.";
-                testSteps = `1. Log in as Team Member A with AC1 (allowed access).
-2. Attempt to search for restricted objects within app launchers.
-3. Verify that restricted objects are visible.
-4. Log in as Team Member B with AC2 (restricted access).
-5. Attempt to search for restricted objects within app launchers.
-6. Verify that restricted objects are NOT visible.
-7. Log in as Team Member C with no specific AC, verify default access.`;
-                expectedResult = "Team members with AC1 can search restricted objects, Team members with AC2 cannot, and default access behaves as expected.";
-                category = "Security Tests";
-                priority = "High";
-                type = "Security";
-                complexity = "High";
-                prerequisites = "Configured app launchers, defined AC1 and AC2, and specific team member accounts.";
-            }
-
-
-            const userStoryTestCase = {
-                'Test ID': `US_${String(testIdCounter++).padStart(3, '0')}`,
-                'Test Name': testName,
-                'Test Objective': testObjective,
-                'Step Name': 'Verify User Story Functionality', // Can be refined if steps are more granular
-                'Description': testSteps, // Using steps as description for now
-                'Expected Result': expectedResult,
-                'Author': author,
-                'Priority': priority,
-                'Regression': regression,
-                'Type': type,
-                'Complexity': complexity,
-                'Automated': automated,
-                'Fix Version/s': fixVersion,
-                'Sprint': sprint
-            };
-
-            const workbook = XLSX.utils.book_new();
-            const worksheet = XLSX.utils.json_to_sheet([userStoryTestCase]);
-
-            worksheet['!cols'] = [
-                { wch: 15 }, { wch: 40 }, { wch: 50 }, { wch: 30 },
-                { wch: 60 }, { wch: 40 }, { wch: 15 }, { wch: 10 },
-                { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
-                { wch: 20 }, { wch: 15 }
-            ];
-
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'User Story Test Case');
-
-            const fileName = `UserStoryTest_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(workbook, fileName);
-            showNotification(`User Story Excel file exported: ${fileName}`);
+            });
+        });
+        const worksheet = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(excelData), 'Test Cases');
+        const fileName = `TestCases_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
+    }
+    function exportToCSV() {
+        if (testCases.length === 0) {
+            alert('Please add some test cases before exporting');
+            return;
         }
+        let csvData = [];
+        testCases.forEach((test, index) => {
+            const roles = (test.userRoles && test.userRoles.length) ? test.userRoles : [''];
+            roles.forEach(role => {
+                csvData.push({
+                    'Test ID': `TC_${String(index + 1).padStart(3, '0')}`,
+                    'User Story ID': test.userStoryId || '',
+                    'Test Name': test.name,
+                    'Category': test.category,
+                    'Priority': test.priority,
+                    'User Role': role,
+                    'Prerequisites': test.prerequisites,
+                    'Acceptance Criteria': (test.acceptanceCriteria && test.acceptanceCriteria.length) ? test.acceptanceCriteria.map(ac => `${ac.title}: ${ac.steps.join(' | ')}`).join(' || ') : '',
+                    'Expected Result': test.expected,
+                    'Test Objective': test.objective
+                });
+            });
+        });
+        const worksheet = XLSX.utils.json_to_sheet(csvData);
+        const csvString = XLSX.utils.sheet_to_csv(worksheet);
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TestCases_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+    // --- Initial Render ---
+    updateLivePreview();
+    renderTestCaseList();
 
+    // --- Sidebar Navigation Functionality ---
+    function showPage(page) {
+        document.getElementById('testCasePage').style.display = page === 'testcases' ? '' : 'none';
+        document.getElementById('testCaseListSection').style.display = page === 'testcases' ? '' : 'none';
+        document.getElementById('settingsPage').style.display = page === 'settings' ? 'flex' : 'none';
+        document.getElementById('navTestCases').classList.toggle('active', page === 'testcases');
+        document.getElementById('navSettings').classList.toggle('active', page === 'settings');
+    }
+    document.getElementById('navTestCases').onclick = function(e) { e.preventDefault(); showPage('testcases'); };
+    document.getElementById('navSettings').onclick = function(e) { e.preventDefault(); showPage('settings'); };
+    showPage('testcases');
 
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = 'notification show';
-            notification.textContent = message;
-            
-            if (type === 'error') {
-                notification.style.background = '#da3633';
-            } else if (type === 'warning') {
-                notification.style.background = '#fb8500';
-            }
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => document.body.removeChild(notification), 300);
-            }, 3000);
+    // --- Chatbot Functionality ---
+    const chatbotBtn = document.getElementById('chatbotBtn');
+    const chatbotWindow = document.getElementById('chatbotWindow');
+    const chatbotClose = document.getElementById('chatbotClose');
+    const chatbotForm = document.getElementById('chatbotForm');
+    const chatbotInput = document.getElementById('chatbotInput');
+    const chatbotMessages = document.getElementById('chatbotMessages');
+    chatbotBtn.onclick = () => { chatbotWindow.style.display = 'flex'; chatbotInput.focus(); };
+    chatbotClose.onclick = () => { chatbotWindow.style.display = 'none'; };
+    chatbotForm.onsubmit = function(e) {
+        e.preventDefault();
+        const msg = chatbotInput.value.trim();
+        if (!msg) return;
+        const userMsg = document.createElement('div');
+        userMsg.className = 'chatbot-message user';
+        userMsg.textContent = msg;
+        chatbotMessages.appendChild(userMsg);
+        chatbotInput.value = '';
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        setTimeout(() => {
+            const botMsg = document.createElement('div');
+            botMsg.className = 'chatbot-message bot';
+            botMsg.textContent = getNovaAIResponse(msg);
+            chatbotMessages.appendChild(botMsg);
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        }, 600);
+    };
+    function getNovaAIResponse(msg) {
+        msg = msg.toLowerCase();
+        if (msg.includes('where should i start')) return 'Start by creating your first test case! Click "Create Test Case", fill in the name, objective, and user roles. Add acceptance criteria and steps, then save. Nova recommends starting with your most critical business flows.';
+        if (msg.includes('export')) return 'To export your test cases, use the Export XLSX or Export CSV buttons above the table.';
+        if (msg.includes('best practice')) return 'Best practices: Write clear objectives, use specific acceptance criteria, and assign relevant user roles.';
+        if (msg.includes('role')) return 'User roles help you test from different perspectives. Add or select roles in the Roles tab.';
+        if (msg.includes('acceptance criteria')) return 'Acceptance Criteria are the conditions that must be met for the test to pass. Add multiple ACs and steps as needed.';
+        if (msg.includes('reset') || msg.includes('clear')) return 'To reset the form, simply refresh the page or submit a new test case.';
+        if (msg.includes('priority')) return 'Prioritize your test cases to focus on the most critical scenarios first.';
+        if (msg.includes('objective')) return 'The objective should describe what the test is meant to validate.';
+        if (msg.includes('help')) return 'You can ask me about test case management, how to use this app, or best practices!';
+        if (msg.includes('settings')) return 'Settings are coming soon!';
+        if (msg.includes('hello') || msg.includes('hi')) return 'Hello! How can I help you with your test cases today?';
+        return 'I am here to help with test case management, best practices, and using this app. Try asking about roles, acceptance criteria, or exporting.';
+    }
+
+    // --- LOGIN/LOGOUT & ENCRYPTION ---
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+    const loginForm = document.getElementById('loginForm');
+    const userIdInput = document.getElementById('userIdInput');
+    const userIdLabel = document.getElementById('userIdLabel');
+    let userId = localStorage.getItem('testashield_userid') || '';
+    function showLogin() {
+      loginScreen.style.display = 'flex';
+      mainApp.style.display = 'none';
+    }
+    function showApp() {
+      loginScreen.style.display = 'none';
+      mainApp.style.display = '';
+      userIdLabel.textContent = userId ? userId : '';
+    }
+    if (!userId) {
+      showLogin();
+    } else {
+      showApp();
+    }
+    loginForm.onsubmit = function(e) {
+      e.preventDefault();
+      userId = userIdInput.value.trim();
+      if (!userId) return;
+      localStorage.setItem('testashield_userid', userId);
+      showApp();
+      loadEncryptedTestCases();
+    };
+    // --- ENCRYPT/DECRYPT TEST CASES ---
+    function encryptTestCases(data) {
+      if (!userId) return '';
+      return CryptoJS.AES.encrypt(JSON.stringify(data), userId).toString();
+    }
+    function decryptTestCases(cipher) {
+      if (!userId || !cipher) return [];
+      try {
+        const bytes = CryptoJS.AES.decrypt(cipher, userId);
+        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+        return JSON.parse(decrypted) || [];
+      } catch (e) { return []; }
+    }
+    function saveEncryptedTestCases() {
+      const cipher = encryptTestCases(testCases);
+      localStorage.setItem('testashield_cases_' + userId, cipher);
+    }
+    function loadEncryptedTestCases() {
+      const cipher = localStorage.getItem('testashield_cases_' + userId);
+      testCases = decryptTestCases(cipher);
+      renderTestCaseList();
+    }
+    // --- Patch addTestCase to encrypt ---
+    const _addTestCase = addTestCase;
+    addTestCase = function() {
+      _addTestCase();
+      saveEncryptedTestCases();
+    };
+    // --- Patch renderTestCaseList to save on delete ---
+    const _renderTestCaseList = renderTestCaseList;
+    renderTestCaseList = function() {
+      _renderTestCaseList();
+      saveEncryptedTestCases();
+    };
+    // --- On load, decrypt test cases for user ---
+    if (userId) {
+      loadEncryptedTestCases();
+    }
+
+    // --- ML PIPELINE INTEGRATION ---
+    const mlBtn = document.getElementById('mlPipelineBtn');
+    const mlModal = document.getElementById('mlModal');
+    const mlModalContent = document.getElementById('mlModalContent');
+    const mlModalClose = document.getElementById('mlModalClose');
+    if (mlBtn) {
+      mlBtn.onclick = async function() {
+        mlModal.style.display = 'flex';
+        mlModalContent.textContent = 'Processing...';
+        // --- Connect your real ML backend here ---
+        // POST decrypted testCases to /api/ml-pipeline and show results
+        try {
+          const resp = await fetch('/api/ml-pipeline', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, testCases })
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            mlModalContent.textContent = data.result || JSON.stringify(data);
+          } else {
+            throw new Error('ML pipeline unavailable');
+          }
+        } catch (e) {
+          // Mock ML result for demo
+          if (testCases.length) {
+            mlModalContent.innerHTML = `<b>ML Suggestion:</b> Prioritize <span style='color:var(--primary);font-weight:700;'>"${testCases[0].name}"</span> for immediate testing.<br><br><i>(This is a mock result. Connect your ML backend at <code>/api/ml-pipeline</code>.)</i>`;
+          } else {
+            mlModalContent.innerHTML = 'No test cases to analyze.';
+          }
         }
+      };
+    }
+    if (mlModalClose) mlModalClose.onclick = () => { mlModal.style.display = 'none'; };
+    window.onclick = function(e) { if (e.target === mlModal) mlModal.style.display = 'none'; };
 
-        // Initialize display
-        updateDisplay();
+    // --- AI GENERATE TEST CASE ---
+    const aiGenBtn = document.getElementById('aiGenBtn');
+    const aiModal = document.getElementById('aiModal');
+    const aiModalClose = document.getElementById('aiModalClose');
+    const aiGenForm = document.getElementById('aiGenForm');
+    const aiFeatureInput = document.getElementById('aiFeatureInput');
+    const aiTyping = document.getElementById('aiTyping');
+    const aiGenResult = document.getElementById('aiGenResult');
+    let aiGeneratedCount = 0;
+    let mlPrioritizedCount = 0;
+    function showAIModal() { aiModal.style.display = 'flex'; aiGenResult.innerHTML = ''; aiTyping.style.display = 'none'; aiFeatureInput.value = ''; }
+    function closeAIModal() { aiModal.style.display = 'none'; }
+    if (aiGenBtn) aiGenBtn.onclick = showAIModal;
+    if (aiModalClose) aiModalClose.onclick = closeAIModal;
+    window.onclick = function(e) { if (e.target === aiModal) closeAIModal(); if (e.target === mlModal) mlModal.style.display = 'none'; };
+    aiGenForm.onsubmit = function(e) {
+      e.preventDefault();
+      aiGenResult.innerHTML = '';
+      aiTyping.style.display = 'block';
+      setTimeout(() => {
+        aiTyping.style.display = 'none';
+        // Generate a test case (mock, but could call real AI)
+        const feature = aiFeatureInput.value.trim();
+        const tc = generateAITestCase(feature);
+        aiGenResult.innerHTML = renderAICard(tc);
+        aiGeneratedCount++;
+        updateDashboardMetrics();
+        // Add event listeners for Add/Edit
+        document.getElementById('aiAddBtn').onclick = function() {
+          addTestCaseFromAI(tc);
+          closeAIModal();
+        };
+      }, 1200);
+    };
+    function generateAITestCase(feature) {
+      // Simple prompt engineering for demo
+      const name = feature ? `Test: ${feature.charAt(0).toUpperCase() + feature.slice(1)}` : 'Test: New Feature';
+      const objective = feature ? `Verify the ${feature.toLowerCase()} functionality works as intended.` : 'Verify the feature works as intended.';
+      const userRoles = ['End User', 'Admin'];
+      const acceptanceCriteria = [
+        { title: 'Valid Input', steps: ['User enters valid data', 'System processes request', 'Success message is shown'] },
+        { title: 'Invalid Input', steps: ['User enters invalid data', 'System shows error', 'No changes are made'] }
+      ];
+      const expected = feature ? `The ${feature.toLowerCase()} completes successfully and user is notified.` : 'The feature completes successfully and user is notified.';
+      const prerequisites = feature ? `User has access to ${feature.toLowerCase()} functionality.` : 'User has access to the feature.';
+      return { name, objective, userRoles, acceptanceCriteria, expected, prerequisites };
+    }
+    function renderAICard(tc) {
+      return `<div class="ai-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span class="nova-avatar"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="10" fill="#FFD100"/><path d="M7 12l3 3 5-6" stroke="#A6192E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span style="font-weight:800;color:var(--primary);font-size:1.1em;">AI-Generated Test Case <span class="ai-badge">AI</span></span>
+        </div>
+        <div><b>Name:</b> ${tc.name}</div>
+        <div><b>Objective:</b> ${tc.objective}</div>
+        <div><b>User Roles:</b> ${tc.userRoles.join(', ')}</div>
+        <div><b>Expected Result:</b> ${tc.expected}</div>
+        <div><b>Prerequisites:</b> ${tc.prerequisites}</div>
+        <div><b>Acceptance Criteria:</b><ul style="margin:0 0 0 18px;">${tc.acceptanceCriteria.map(ac => `<li><b>${ac.title}:</b> ${ac.steps.join(' → ')}</li>`).join('')}</ul></div>
+        <div style="display:flex;gap:12px;margin-top:18px;">
+          <button class="export-btn accent ripple" id="aiAddBtn">Add to Test Cases</button>
+        </div>
+      </div>`;
+    }
+    function addTestCaseFromAI(tc) {
+      // Add to testCases and save
+      testCases.push({
+        id: Date.now(),
+        name: tc.name,
+        userStoryId: '',
+        objective: tc.objective,
+        userRoles: tc.userRoles,
+        category: 'AI Generated',
+        priority: 'Medium',
+        expected: tc.expected,
+        prerequisites: tc.prerequisites,
+        acceptanceCriteria: tc.acceptanceCriteria
+      });
+      saveEncryptedTestCases();
+      renderTestCaseList();
+      updateDashboardMetrics();
+    }
+    // --- Animated Dashboard Metrics ---
+    function updateDashboardMetrics() {
+      document.getElementById('metricTotal').textContent = testCases.length;
+      document.getElementById('metricAI').textContent = aiGeneratedCount;
+      document.getElementById('metricML').textContent = mlPrioritizedCount;
+    }
+    updateDashboardMetrics();
+
+    // --- AI LAB PAGE NAVIGATION ---
+    const navTestCases = document.getElementById('navTestCases');
+    const navAiLab = document.getElementById('navAiLab');
+    const mainContent = document.getElementById('mainContent');
+    const aiLabPage = document.getElementById('aiLabPage');
+    function showPageV2(page) {
+      if (page === 'dashboard') {
+        mainContent.style.display = '';
+        aiLabPage.style.display = 'none';
+        navTestCases.classList.add('active');
+        navAiLab.classList.remove('active');
+      } else if (page === 'aiLab') {
+        mainContent.style.display = 'none';
+        aiLabPage.style.display = '';
+        navTestCases.classList.remove('active');
+        navAiLab.classList.add('active');
+      }
+    }
+    navTestCases.onclick = function(e) { e.preventDefault(); showPageV2('dashboard'); };
+    navAiLab.onclick = function(e) { e.preventDefault(); showPageV2('aiLab'); };
+    showPageV2('dashboard');
+
+    // --- AI LAB GENERATE FOR ALL ROLES ---
+    const aiLabForm = document.getElementById('aiLabForm');
+    const aiLabFeatureInput = document.getElementById('aiLabFeatureInput');
+    const aiLabTyping = document.getElementById('aiLabTyping');
+    const aiLabResults = document.getElementById('aiLabResults');
+    aiLabForm.onsubmit = function(e) {
+      e.preventDefault();
+      aiLabResults.innerHTML = '';
+      aiLabTyping.style.display = 'block';
+      setTimeout(() => {
+        aiLabTyping.style.display = 'none';
+        const feature = aiLabFeatureInput.value.trim();
+        // Use all roles from the multi-select list
+        const allRoles = [
+          'End User','Admin','Support','Manager','Auditor','API User','Business Analyst','QA','Developer','Finance','Compliance','Customer','Guest'
+        ];
+        const cards = allRoles.map(role => renderAICard(generateAITestCase(feature, role), role, true)).join('');
+        aiLabResults.innerHTML = cards;
+        // Add event listeners for Add
+        allRoles.forEach(role => {
+          const btn = document.getElementById('aiLabAddBtn_' + role.replace(/\W/g,''));
+          if (btn) btn.onclick = function() {
+            addTestCaseFromAI(generateAITestCase(feature, role));
+            btn.textContent = 'Added!';
+            btn.disabled = true;
+          };
+        });
+      }, 1200);
+    };
+    function generateAITestCase(feature, role) {
+      // More tailored for each role
+      const name = feature ? `Test: ${feature.charAt(0).toUpperCase() + feature.slice(1)} (${role})` : `Test: New Feature (${role})`;
+      const objective = feature ? `Verify the ${feature.toLowerCase()} functionality works as intended for the ${role.toLowerCase()} role.` : `Verify the feature works as intended for the ${role.toLowerCase()} role.`;
+      const userRoles = [role];
+      const acceptanceCriteria = [
+        { title: 'Valid Input', steps: [`${role} enters valid data`, 'System processes request', 'Success message is shown'] },
+        { title: 'Invalid Input', steps: [`${role} enters invalid data`, 'System shows error', 'No changes are made'] }
+      ];
+      const expected = feature ? `The ${feature.toLowerCase()} completes successfully for ${role.toLowerCase()} and user is notified.` : `The feature completes successfully for ${role.toLowerCase()} and user is notified.`;
+      const prerequisites = feature ? `${role} has access to ${feature.toLowerCase()} functionality.` : `${role} has access to the feature.`;
+      return { name, objective, userRoles, acceptanceCriteria, expected, prerequisites };
+    }
+    function renderAICard(tc, role, isLab) {
+      // Modern, professional avatar: abstract geometric SVG, no emojis
+      return `<div class="ai-card" style="background:rgba(245,250,255,0.99);backdrop-filter:blur(8px);border:1.5px solid #e0f2fe;box-shadow:0 2px 16px #38bdf822;border-radius:18px;padding:28px 24px;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+          <span class="nova-avatar" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#38bdf8 60%,#0ea5e9 100%);border-radius:50%;box-shadow:0 0 0 2px #e0f2fe;">
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="15" cy="15" r="13.5" fill="#e0f2fe"/>
+              <rect x="8" y="8" width="14" height="14" rx="7" fill="#38bdf8"/>
+              <rect x="12" y="12" width="6" height="6" rx="3" fill="#0ea5e9"/>
+            </svg>
+          </span>
+          <span style="font-weight:700;color:#0ea5e9;font-size:1.09em;letter-spacing:-0.5px;">AI-Generated for <span style="color:#1e293b;">${role}</span></span>
+        </div>
+        <div style="font-size:1.09em;"><b>Name:</b> ${tc.name}</div>
+        <div style="margin-top:2px;"><b>Objective:</b> ${tc.objective}</div>
+        <div style="margin-top:2px;"><b>User Roles:</b> ${tc.userRoles.join(', ')}</div>
+        <div style="margin-top:2px;"><b>Expected Result:</b> ${tc.expected}</div>
+        <div style="margin-top:2px;"><b>Prerequisites:</b> ${tc.prerequisites}</div>
+        <div style="margin-top:2px;"><b>Acceptance Criteria:</b><ul style="margin:0 0 0 18px;">${tc.acceptanceCriteria.map(ac => `<li><b>${ac.title}:</b> ${ac.steps.join(' &rarr; ')}</li>`).join('')}</ul></div>
+        <div style="display:flex;gap:12px;margin-top:22px;">
+          <button class="export-btn accent ripple" id="aiLabAddBtn_${role.replace(/\W/g,'')}">Add to Test Cases</button>
+        </div>
+      </div>`;
+    }
     </script>
 </body>
 </html>
